@@ -57,7 +57,7 @@ command_list =
 		.cursor_at_end = true,
 		.cmd =
 		{
-			{ ".\build/yubi.exe", .os = "win" },
+			{ ".\build\yubi.exe", .os = "win" },
 		},
 	},
 
