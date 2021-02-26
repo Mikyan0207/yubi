@@ -3,7 +3,7 @@
 set CLCompilerPath= "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
 
 set opts=-FC -GR- -EHsc- -Od -Oi -WX -W4 -nologo -Zi /std:c++17 -Fm"yubi.map"
-set code=..\Sources\main.cpp
+set code=..\Sources\main.cpp ..\Sources\StackAllocator.cpp
 set libs=user32.lib
 
 IF NOT EXIST build mkdir build
