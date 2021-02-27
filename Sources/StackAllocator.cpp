@@ -22,6 +22,7 @@ void* StackAllocator::Alloc(u32 size)
 void StackAllocator::Free(u32 size)
 {
     // TODO(Mikyan): abort? crash? error?
+    // or memset(0) all bytes?
     if (m_StackSize < m_CurrentPos + size)
         return;
     

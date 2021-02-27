@@ -3,6 +3,7 @@
 
 #include <Windows.h>
 #include "Types.h"
+#include "Monitor.h"
 
 enum class SplitMode
 {
@@ -11,21 +12,37 @@ enum class SplitMode
     VERTICAL
 };
 
+enum class WindowSide
+{
+    LEFT,
+    RIGHT
+};
+
 struct Window
 {
+    Window(u32 id)
+    {
+        Id = id;
+    }
+    
+    u32 Id;
     HWND Handle;
     WCHAR* Title;
     
-    i32 X;
-    i32 Y;
-    i32 Width;
-    i32 Height;
+    bool IsFullScreen;
+};
+
+struct WindowNode
+{
+    Rect<i32> Rect;
+    Window* Window; // Temp.
+    
+    WindowNode* Parent;
+    WindowNode* Left;
+    WindowNode* Right;
     
     SplitMode Split;
-    
-    Window* Parent;
-    Window* Left;
-    Window* Right;
+    WindowSide Side;
 };
 
 #endif //_WINDOW_H
