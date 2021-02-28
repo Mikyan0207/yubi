@@ -12,6 +12,8 @@
 // TODO(Mikyan): Remove std::vector<Monitor*>, use custom allocator instead of new?
 // Force redraw when resizing windows.
 // Handle negative values when moving windows.
+// Add Padding options to screen.
+// Fix gap/ratio when resizing since Windows10 use ints for position/size of a window..
 
 static std::vector<Monitor*> Monitors;
 
@@ -22,6 +24,8 @@ static const WCHAR* IgnoredWindows[] = {
 
 static u32 WindowIdx = 0;
 static u32 MonitorIdx = 0;
+
+
 
 static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
 {
@@ -35,7 +39,6 @@ static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
         return nullptr;
     }
     
-    
     for (const auto& monitor : Monitors)
     {
         if (strcmp(monitor->MonitorName, info.szDevice) == 0)
@@ -43,6 +46,51 @@ static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
     }
     
     return nullptr;
+}
+
+LRESULT CALLBACK ShellProcCallback(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode == HSHELL_WINDOWCREATED)
+    {
+        auto handle = (HWND)wParam;
+        const auto length = GetWindowTextLengthW(handle);
+        
+        Window* w = new Window(WindowIdx++);
+        
+        w->Handle = handle;
+        w->Title = new WCHAR[length+1]();
+        GetWindowTextW(handle, w->Title, length+1);
+        
+        for(const auto& iTitle : IgnoredWindows)
+        {
+            if (wcscmp(w->Title, iTitle) == 0)
+            {
+                delete w;
+                return CallNextHookEx(NULL, nCode, wParam, lParam);
+            }
+        }
+        
+        auto* monitor = GetMonitorFromWindow(w->Handle, MONITOR_DEFAULTTONEAREST);
+        
+        if (monitor != nullptr)
+        {
+            std::cout << "Window will be added" << std::endl;
+            //monitor->Display->AddWindow(w);
+        }
+    }
+    else if (nCode == HSHELL_WINDOWDESTROYED)
+    {
+        auto handle =  (HWND)wParam;
+        auto* monitor = GetMonitorFromWindow(handle, MONITOR_DEFAULTTONEAREST);
+        
+        if (monitor != nullptr)
+        {
+            std::cout << "Window will be removed" << std::endl;
+            // TODO(Mikyan): Remove Window from BSP and update.
+        }
+    }
+    
+    return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
 BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
@@ -104,6 +152,8 @@ BOOL CALLBACK EnumMonitorsCallback(HMONITOR monitor, HDC, LPRECT, LPARAM)
 
 int main()
 {
+    auto handle = LoadLibraryA("yubi.exe");
+    HHOOK hook = SetWindowsHookExA(WH_SHELL, ShellProcCallback, handle, 0);
     EnumDisplayMonitors(nullptr, nullptr, EnumMonitorsCallback, NULL);
     EnumWindows(EnumWindowCallback, NULL);
     
@@ -113,4 +163,7 @@ int main()
     }
     
     // TODO(Mikyan): Infinite Loop.
+    while (true) {}
+    
+    UnhookWindowsHookEx(hook);
 }
