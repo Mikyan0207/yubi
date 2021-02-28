@@ -3,7 +3,7 @@
 
 #include <Windows.h>
 #include "Types.h"
-#include "Monitor.h"
+#include "Rect.h"
 
 enum class SplitMode
 {
