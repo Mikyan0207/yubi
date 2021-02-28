@@ -1,169 +1,28 @@
-#include <iostream>
-#include <vector>
 #include <Windows.h>
-
-#include "Window.h"
-#include "Screen.h"
 #include "Monitor.h"
+#include "yubi.h"
+#include <iostream>
 
-// NOTE(Mikyan): Somehow, I can't get the RECT for certain window like
-// Edge for example.
-
-// TODO(Mikyan): Remove std::vector<Monitor*>, use custom allocator instead of new?
-// Force redraw when resizing windows.
-// Handle negative values when moving windows.
-// Add Padding options to screen.
-// Fix gap/ratio when resizing since Windows10 use ints for position/size of a window..
-
-static std::vector<Monitor*> Monitors;
-
-static const WCHAR* IgnoredWindows[] = {
-    L"Program Manager",
-    L"Microsoft Text Input Application"
-};
-
-static u32 WindowIdx = 0;
-static u32 MonitorIdx = 0;
-
-
-
-static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
-{
-    auto win32Monitor = MonitorFromWindow(window, flags);
-    
-    MONITORINFOEX info{};
-    info.cbSize = sizeof(MONITORINFOEX);
-    
-    if (!GetMonitorInfoA(win32Monitor, &info))
-    {
-        return nullptr;
-    }
-    
-    for (const auto& monitor : Monitors)
-    {
-        if (strcmp(monitor->MonitorName, info.szDevice) == 0)
-            return monitor;
-    }
-    
-    return nullptr;
-}
-
-LRESULT CALLBACK ShellProcCallback(int nCode, WPARAM wParam, LPARAM lParam)
-{
-    if (nCode == HSHELL_WINDOWCREATED)
-    {
-        auto handle = (HWND)wParam;
-        const auto length = GetWindowTextLengthW(handle);
-        
-        Window* w = new Window(WindowIdx++);
-        
-        w->Handle = handle;
-        w->Title = new WCHAR[length+1]();
-        GetWindowTextW(handle, w->Title, length+1);
-        
-        for(const auto& iTitle : IgnoredWindows)
-        {
-            if (wcscmp(w->Title, iTitle) == 0)
-            {
-                delete w;
-                return CallNextHookEx(NULL, nCode, wParam, lParam);
-            }
-        }
-        
-        auto* monitor = GetMonitorFromWindow(w->Handle, MONITOR_DEFAULTTONEAREST);
-        
-        if (monitor != nullptr)
-        {
-            std::cout << "Window will be added" << std::endl;
-            //monitor->Display->AddWindow(w);
-        }
-    }
-    else if (nCode == HSHELL_WINDOWDESTROYED)
-    {
-        auto handle =  (HWND)wParam;
-        auto* monitor = GetMonitorFromWindow(handle, MONITOR_DEFAULTTONEAREST);
-        
-        if (monitor != nullptr)
-        {
-            std::cout << "Window will be removed" << std::endl;
-            // TODO(Mikyan): Remove Window from BSP and update.
-        }
-    }
-    
-    return CallNextHookEx(NULL, nCode, wParam, lParam);
-}
-
-BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
-{
-    const auto length = GetWindowTextLengthW(window);
-    
-    // NOTE(Mikyan): We don't want to stop until we've checked all
-    // windows.
-    if (!IsWindowVisible(window) || length == 0)
-        return TRUE;
-    
-    Window* w = new Window(WindowIdx++);
-    
-    w->Handle = window;
-    w->Title = new WCHAR[length+1]();
-    GetWindowTextW(window, w->Title, length+1);
-    
-    for(const auto& iTitle : IgnoredWindows)
-    {
-        if (wcscmp(w->Title, iTitle) == 0)
-        {
-            delete w;
-            return TRUE;
-        }
-    }
-    
-    // NOTE(Mikyan): If we fail to get the corresponding Monitor, we take the nearest
-    // from this window if we can, otherwise we return nullptr.
-    auto* monitor = GetMonitorFromWindow(w->Handle, MONITOR_DEFAULTTONEAREST);
-    
-    if (monitor != nullptr)
-        monitor->Display->AddWindow(w);
-    
-    return TRUE;
-}
-
-BOOL CALLBACK EnumMonitorsCallback(HMONITOR monitor, HDC, LPRECT, LPARAM)
-{
-    MONITORINFOEX info{};
-    info.cbSize = sizeof(MONITORINFOEX);
-    
-    if (!GetMonitorInfoA(monitor, &info))
-    {
-        return TRUE;
-    }
-    
-    auto* nMonitor = new Monitor();
-    nMonitor->MonitorIndex = MonitorIdx++;
-    nMonitor->MonitorName = new CHAR[CCHDEVICENAME+1]();
-    memcpy(nMonitor->MonitorName, info.szDevice, CCHDEVICENAME);
-    nMonitor->MonitorArea = Rect<i32>(info.rcMonitor.right, info.rcMonitor.bottom);
-    nMonitor->WorkingArea = Rect<i32>(info.rcWork.right, info.rcWork.bottom);
-    nMonitor->Display = new Screen(nMonitor->WorkingArea.Width, nMonitor->WorkingArea.Height);
-    
-    Monitors.emplace_back(nMonitor);
-    
-    return TRUE;
-}
+// NOTE(Mikyan): Callback defined in yubi.dll
+//LRESULT CALLBACK ShellProcCallback(int, WPARAM, LPARAM);
 
 int main()
 {
-    auto handle = LoadLibraryA("yubi.exe");
-    HHOOK hook = SetWindowsHookExA(WH_SHELL, ShellProcCallback, handle, 0);
-    EnumDisplayMonitors(nullptr, nullptr, EnumMonitorsCallback, NULL);
-    EnumWindows(EnumWindowCallback, NULL);
+    auto handle = LoadLibraryA("yubi");
     
-    for(const auto& monitor : Monitors)
+    // NOTE(Mikyan): We could use a out of context WinEvent, but InContext should be faster.
+    // 0x8000 - 0x80FF
+    HWINEVENTHOOK hook = SetWinEventHook(EVENT_OBJECT_CREATE, EVENT_OBJECT_END, handle,
+                                         (WINEVENTPROC)GetProcAddress(handle, "WinEventCallback"), 0, 0, WINEVENT_INCONTEXT | WINEVENT_SKIPOWNPROCESS);
+    
+    // NOTE(Mikyan): This is required for receiving events.
+    // But that's not a problem since we need a main loop
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0))
     {
-        monitor->Display->UpdateScreen();
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
     
-    // TODO(Mikyan): Infinite Loop.
-    while (true) {}
-    
-    UnhookWindowsHookEx(hook);
+    UnhookWinEvent(hook);
 }

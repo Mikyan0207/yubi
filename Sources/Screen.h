@@ -1,6 +1,7 @@
 #ifndef _SCREEN_H
 #define _SCREEN_H
 
+#include "yubi.h"
 #include "Window.h"
 
 enum class DisplayMode
@@ -12,7 +13,7 @@ enum class DisplayMode
 };
 
 // NOTE(Mikyan): At some point, we'll could replace Window pointers by IDs?
-struct Screen
+struct YUBI_API Screen
 {
     Screen(i32 width, i32 height);
     

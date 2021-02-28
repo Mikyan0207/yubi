@@ -1,8 +1,10 @@
 #ifndef _RECT_H
 #define _RECT_H
 
+#include "yubi.h"
+
 template<typename T>
-struct Rect
+struct YUBI_API Rect
 {
     Rect() = default;
     
