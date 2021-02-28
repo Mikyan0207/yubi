@@ -55,7 +55,7 @@ void Screen::CreateWindowNodes(WindowNode* node, Window* window)
 void Screen::Split(WindowNode* node)
 {
     f32 ratio = 0.5f;
-    bool isRoot = IsRootNode(node);
+    //bool isRoot = IsRootNode(node);
     
     if (node->Split == SplitMode::NONE)
     {
@@ -89,7 +89,7 @@ void Screen::Split(WindowNode* node)
     }
     
     // TODO(Mikyan): That's bad. Refactor this part!
-    if (isRoot)
+    /*if (isRoot)
     {
         if (node->Left->Window)
         {
@@ -100,7 +100,7 @@ void Screen::Split(WindowNode* node)
             node->Left->Window = node->Window;
         }
         node->Window = nullptr;
-    }
+    }*/
 }
 
 void Screen::UpdateScreen()
@@ -139,7 +139,7 @@ void Screen::Dump(WindowNode* node)
 
 WindowNode* Screen::GetFirstLeaf(WindowNode* node)
 {
-    if (node->Right == nullptr || node->Left == nullptr)
+    if (node->Right == nullptr && node->Left == nullptr)
         return node;
     
     if (node->Left != nullptr)
