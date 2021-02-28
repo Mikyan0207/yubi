@@ -3,38 +3,59 @@
 
 Screen::Screen(i32 width, i32 height)
 {
+    Mode = DisplayMode::BSP;
     ScreenSize = Rect<i32>(width, height);
     Gap = 1;
     Root = new WindowNode();
+    WindowCount = 0;
     
-    Root->Rect = Rect<i32>(width, height);
+    Root->Rect = Rect<f32>((f32)width, (f32)height);
 }
 
 void Screen::AddWindow(Window* window)
 {
-    auto* leaf = GetFirstLeaf(Root);
-    
-    if (leaf->Right == nullptr)
+    if (IsNodeEmpty(Root))
     {
-        leaf->Right = new WindowNode();
-        leaf->Right->Parent = leaf;
-        leaf->Right->Window = window;
-        Dump(leaf->Right);
+        Root->Window = window;
+        Root->Parent = nullptr;
+        WindowCount += 1;
     }
-    else if (leaf->Left == nullptr)
+    else if (Mode == DisplayMode::BSP)
     {
-        leaf->Left = new WindowNode();
-        leaf->Left->Parent = leaf;
-        leaf->Left->Window = window;
-        Dump(leaf->Left);
+        WindowCount += 1;
+        auto* leaf = GetFirstLeaf(Root);
+        CreateWindowNodes(leaf, window);
+    }
+}
+
+void Screen::CreateWindowNodes(WindowNode* node, Window* window)
+{
+    // NOTE(Mikyan): memset?
+    WindowNode* left = (WindowNode*)VirtualAlloc(0, sizeof(WindowNode), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    WindowNode* right = (WindowNode*)VirtualAlloc(0, sizeof(WindowNode), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    
+    if (GetWindowSide(node) == WindowSide::RIGHT)
+    {
+        right->Window = window;
+    }
+    else
+    {
+        left->Window = window;
     }
     
-    Split(leaf);
+    right->Parent = node;
+    left->Parent = node;
+    
+    node->Right = right;
+    node->Left = left;
+    
+    Split(node);
 }
 
 void Screen::Split(WindowNode* node)
 {
-    float ratio = 0.5f;
+    f32 ratio = 0.5f;
+    bool isRoot = IsRootNode(node);
     
     if (node->Split == SplitMode::NONE)
     {
@@ -66,11 +87,54 @@ void Screen::Split(WindowNode* node)
         node->Right->Rect.Y += Gap;
         node->Right->Rect.Height -= Gap;
     }
+    
+    // TODO(Mikyan): That's bad. Refactor this part!
+    if (isRoot)
+    {
+        if (node->Left->Window)
+        {
+            node->Right->Window = node->Window;
+        }
+        else if (node->Right->Window)
+        {
+            node->Left->Window = node->Window;
+        }
+        node->Window = nullptr;
+    }
+}
+
+void Screen::UpdateScreen()
+{
+    HDWP wp = BeginDeferWindowPos(WindowCount);
+    
+    UpdateWindow(wp, Root);
+    
+    EndDeferWindowPos(wp);
+}
+
+void Screen::UpdateWindow(HDWP wp, WindowNode* node)
+{
+    if (wp && node->Window)
+    {
+        wp = DeferWindowPos(wp, node->Window->Handle, HWND_TOP, (i32)node->Rect.X, (i32)node->Rect.Y,
+                            (i32)node->Rect.Width, (i32)node->Rect.Height, 0);
+    }
+    
+    if (node->Left)
+        UpdateWindow(wp, node->Left);
+    if (node->Right)
+        UpdateWindow(wp, node->Right);
 }
 
 void Screen::Dump(WindowNode* node)
 {
-    printf("[Size] %dx%d\n[Split] %d\n[Side]%d\n", node->Rect.Width, node->Rect.Height, node->Split, node->Side);
+    if (node->Left)
+        Dump(node->Left);
+    if (node->Right)
+        Dump(node->Right);
+    
+    if (node->Window)
+        printf("[Title] %ws, [Size] %fx%f\n[Split] %d\n[Side]%d\n",node->Window->Title, node->Rect.Width, node->Rect.Height, node->Split, node->Side);
 }
 
 WindowNode* Screen::GetFirstLeaf(WindowNode* node)
@@ -79,10 +143,25 @@ WindowNode* Screen::GetFirstLeaf(WindowNode* node)
         return node;
     
     if (node->Left != nullptr)
-        GetFirstLeaf(node->Left);
+        return GetFirstLeaf(node->Left);
     
     if (node->Right != nullptr)
-        GetFirstLeaf(node->Right);
+        return GetFirstLeaf(node->Right);
     
     return nullptr;
+}
+
+bool Screen::IsNodeEmpty(WindowNode* node)
+{
+    return node->Window == nullptr;
+}
+
+bool Screen::IsRootNode(WindowNode* node)
+{
+    return node->Parent == nullptr;
+}
+
+WindowSide Screen::GetWindowSide(WindowNode* node)
+{
+    return node->Side != WindowSide::NONE ? node->Side : WindowSide::RIGHT;
 }

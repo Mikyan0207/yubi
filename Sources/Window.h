@@ -14,6 +14,7 @@ enum class SplitMode
 
 enum class WindowSide
 {
+    NONE,
     LEFT,
     RIGHT
 };
@@ -34,7 +35,7 @@ struct Window
 
 struct WindowNode
 {
-    Rect<i32> Rect;
+    Rect<f32> Rect;
     Window* Window; // Temp.
     
     WindowNode* Parent;
@@ -42,7 +43,7 @@ struct WindowNode
     WindowNode* Right;
     
     SplitMode Split;
-    WindowSide Side;
+    WindowSide Side = WindowSide::NONE;
 };
 
 #endif //_WINDOW_H

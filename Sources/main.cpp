@@ -17,9 +17,6 @@ static u32 WindowIdx = 0;
 
 BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
 {
-    if (window == nullptr)
-        return FALSE;
-    
     const auto length = GetWindowTextLengthW(window);
     
     // NOTE(Mikyan): We don't want to stop until we've checked all
@@ -27,17 +24,27 @@ BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
     if (!IsWindowVisible(window) || length == 0)
         return TRUE;
     
-    Window w(WindowIdx++);
+    Window* w = new Window(WindowIdx++);
     
-    w.Handle = window;
+    w->Handle = window;
+    w->Title = new WCHAR[length+1]();
+    GetWindowTextW(window, w->Title, length+1);
     
+    if (wcscmp(w->Title, L"Program Manager") == 0 
+        || wcscmp(w->Title, L"Microsoft Text Input Application") == 0) // wtf is this?
+    {
+        delete w->Title;
+    }
+    else
+    {
+        gScreen->AddWindow(w);
+    }
     /*w.Rect = Rect<i32>(rect.left, 
                        rect.top,
                        rect.right - rect.left,
                        rect.bottom - rect.top);
     */
     
-    gScreen->AddWindow(&w);
     
     return TRUE;
 }
@@ -71,5 +78,7 @@ int main()
     gScreen = new Screen(info.rcWork.right, info.rcWork.bottom);
     EnumWindows(EnumWindowCallback, NULL);
     
+    gScreen->Dump(gScreen->Root);
+    gScreen->UpdateScreen();
     //MoveMultipleWindow();
 }
