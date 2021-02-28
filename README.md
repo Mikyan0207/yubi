@@ -1,2 +1,2 @@
 # yubi
-Dynamic Window Tiling Manager for Windows 10
+Dynamic Tiling Window Manager for Windows 10
