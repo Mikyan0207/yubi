@@ -5,7 +5,11 @@ Screen::Screen(i32 width, i32 height)
 {
     Mode = DisplayMode::BSP;
     ScreenSize = Rect<i32>(width, height);
-    Gap = 1;
+    ScreenRatio = (float)ScreenSize.Width / ScreenSize.Height;
+    
+    Ratio = 0.5f;
+    Gap = 0.0f; 
+    
     Root = new WindowNode();
     WindowCount = 0;
     
@@ -14,7 +18,7 @@ Screen::Screen(i32 width, i32 height)
 
 void Screen::AddWindow(Window* window)
 {
-    if (IsNodeEmpty(Root))
+    if (!IsNodeOccupied(Root) && IsLeafNode(Root))
     {
         Root->Window = window;
         Root->Parent = nullptr;
@@ -22,9 +26,9 @@ void Screen::AddWindow(Window* window)
     }
     else if (Mode == DisplayMode::BSP)
     {
-        WindowCount += 1;
         auto* leaf = GetFirstLeaf(Root);
         CreateWindowNodes(leaf, window);
+        WindowCount += 1;
     }
 }
 
@@ -37,12 +41,15 @@ void Screen::CreateWindowNodes(WindowNode* node, Window* window)
     if (GetWindowSide(node) == WindowSide::RIGHT)
     {
         right->Window = window;
+        left->Window = node->Window;
     }
     else
     {
         left->Window = window;
+        right->Window = node->Window;
     }
     
+    node->Window = nullptr;
     right->Parent = node;
     left->Parent = node;
     
@@ -54,53 +61,36 @@ void Screen::CreateWindowNodes(WindowNode* node, Window* window)
 
 void Screen::Split(WindowNode* node)
 {
-    f32 ratio = 0.5f;
-    //bool isRoot = IsRootNode(node);
-    
     if (node->Split == SplitMode::NONE)
     {
-        node->Split = node->Rect.Width / node->Rect.Height >= 1.16f ? SplitMode::VERTICAL : SplitMode::HORIZONTAL;
+        node->Split = node->Rect.Width / node->Rect.Height >= ScreenRatio ? SplitMode::VERTICAL : SplitMode::HORIZONTAL;
     }
     
     
     if (node->Split == SplitMode::VERTICAL)
     {
         node->Left->Rect = node->Rect;
-        node->Left->Rect.Width *= ratio;
+        node->Left->Rect.Width *= Ratio;
         node->Left->Rect.Width -= Gap;
         
         node->Right->Rect = node->Rect;
-        node->Right->Rect.X += (node->Rect.Width * ratio);
-        node->Right->Rect.Width *= (1 - ratio);
+        node->Right->Rect.X += (node->Rect.Width * Ratio);
+        node->Right->Rect.Width *= (1 - Ratio);
         node->Right->Rect.X += Gap;
         node->Right->Rect.Width -= Gap;
     }
     else
     {
         node->Left->Rect = node->Rect;
-        node->Left->Rect.Height *= ratio;
+        node->Left->Rect.Height *= Ratio;
         node->Left->Rect.Height -= Gap;
         
         node->Right->Rect = node->Rect;
-        node->Right->Rect.Y += (node->Rect.Height * ratio);
-        node->Right->Rect.Height *= (1 - ratio);
+        node->Right->Rect.Y += (node->Rect.Height * Ratio);
+        node->Right->Rect.Height *= (1 - Ratio);
         node->Right->Rect.Y += Gap;
         node->Right->Rect.Height -= Gap;
     }
-    
-    // TODO(Mikyan): That's bad. Refactor this part!
-    /*if (isRoot)
-    {
-        if (node->Left->Window)
-        {
-            node->Right->Window = node->Window;
-        }
-        else if (node->Right->Window)
-        {
-            node->Left->Window = node->Window;
-        }
-        node->Window = nullptr;
-    }*/
 }
 
 void Screen::UpdateScreen()
@@ -117,7 +107,7 @@ void Screen::UpdateWindow(HDWP wp, WindowNode* node)
     if (wp && node->Window)
     {
         wp = DeferWindowPos(wp, node->Window->Handle, HWND_TOP, (i32)node->Rect.X, (i32)node->Rect.Y,
-                            (i32)node->Rect.Width, (i32)node->Rect.Height, 0);
+                            (i32)node->Rect.Width, (i32)node->Rect.Height, SWP_NOCOPYBITS);
     }
     
     if (node->Left)
@@ -139,26 +129,32 @@ void Screen::Dump(WindowNode* node)
 
 WindowNode* Screen::GetFirstLeaf(WindowNode* node)
 {
-    if (node->Right == nullptr && node->Left == nullptr)
-        return node;
+    auto* tmp = node;
     
-    if (node->Left != nullptr)
-        return GetFirstLeaf(node->Left);
+    while (!IsLeafNode(tmp))
+        tmp = tmp->Left;
     
-    if (node->Right != nullptr)
-        return GetFirstLeaf(node->Right);
-    
-    return nullptr;
+    return tmp;
 }
 
-bool Screen::IsNodeEmpty(WindowNode* node)
+WindowNode* Screen::GetLastLeaf(WindowNode* node)
 {
-    return node->Window == nullptr;
+    auto* tmp = node;
+    
+    while(!IsLeafNode(tmp))
+        tmp = tmp->Right;
+    
+    return tmp;
 }
 
-bool Screen::IsRootNode(WindowNode* node)
+bool Screen::IsLeafNode(WindowNode* node)
 {
-    return node->Parent == nullptr;
+    return node->Left == nullptr && node->Right == nullptr;
+}
+
+bool Screen::IsNodeOccupied(WindowNode* node)
+{
+    return node->Window != nullptr;
 }
 
 WindowSide Screen::GetWindowSide(WindowNode* node)

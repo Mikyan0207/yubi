@@ -20,20 +20,22 @@ struct Screen
     void CreateWindowNodes(WindowNode* node, Window* window);
     void Split(WindowNode*);
     void UpdateScreen();
+    void UpdateWindowNode(WindowNode* node);
     void UpdateWindow(HDWP wp, WindowNode* node);
     void Dump(WindowNode* node);
-    bool IsNodeEmpty(WindowNode* node);
-    bool IsRootNode(WindowNode* node);
+    bool IsLeafNode(WindowNode* node);
+    bool IsNodeOccupied(WindowNode* node);
     WindowSide GetWindowSide(WindowNode* node);
     WindowNode* GetFirstLeaf(WindowNode* node);
-    
+    WindowNode* GetLastLeaf(WindowNode* node);
     Rect<i32> ScreenSize;
     u32 WindowCount;
     WindowNode* Root;
     
-    // NOTE(Mikyan): We may need a ratio when resizing windows.
-    
-    u32 Gap;
+    // NOTE(Mikyan): 16:9, 21:9, ...
+    f32 ScreenRatio;
+    f32 Ratio;
+    f32 Gap;
     u32 PaddingTop;
     u32 PaddingLeft;
     u32 PaddingRight;

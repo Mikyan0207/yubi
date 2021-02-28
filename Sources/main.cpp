@@ -49,20 +49,6 @@ BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
     return TRUE;
 }
 
-// NOTE(Mikyan): Just used for testing.
-void MoveMultipleWindow()
-{
-    
-    HDWP p = BeginDeferWindowPos(2);
-    
-    // Move window using DeferWindowPos()
-    //p = DeferWindowPos(p, g_Windows[0].Handle, HWND_TOP, 1, 0, center - 1, height - 1, 0);
-    //p = DeferWindowPos(p, g_Windows[1].Handle, HWND_TOP, center + 1, 0, center - 1, height - 1, 0);
-    
-    EndDeferWindowPos(p);
-    
-}
-
 int main()
 {
     HMONITOR monitor = MonitorFromPoint(POINT {0, 0}, MONITOR_DEFAULTTOPRIMARY);
