@@ -3,9 +3,6 @@
 #include "yubi.h"
 #include <iostream>
 
-// NOTE(Mikyan): Callback defined in yubi.dll
-//LRESULT CALLBACK ShellProcCallback(int, WPARAM, LPARAM);
-
 int main()
 {
     auto handle = LoadLibraryA("yubi");

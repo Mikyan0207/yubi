@@ -18,17 +18,24 @@ struct YUBI_API Screen
     Screen(i32 width, i32 height);
     
     void AddWindow(Window* window);
-    void CreateWindowNodes(WindowNode* node, Window* window);
-    void Split(WindowNode*);
+    void RemoveWindow(HWND windowHandle);
+    
     void UpdateScreen();
     void UpdateWindowNode(WindowNode* node);
     void UpdateWindow(HDWP wp, WindowNode* node);
-    void Dump(WindowNode* node);
-    bool IsLeafNode(WindowNode* node);
-    bool IsNodeOccupied(WindowNode* node);
-    WindowSide GetWindowSide(WindowNode* node);
-    WindowNode* GetFirstLeaf(WindowNode* node);
-    WindowNode* GetLastLeaf(WindowNode* node);
+    
+    void Tree_CreateNode(WindowNode* parent, Window* window);
+    void Tree_Delete(WindowNode* root);
+    
+    void        WindowNode_Split(WindowNode* node);
+    void        WindowNode_Swap(WindowNode* a, WindowNode* b);
+    WindowNode* WindowNode_GetFirstLeaf(WindowNode* node);
+    WindowNode* WindowNode_GetLastLeaf(WindowNode* node);
+    bool        WindowNode_IsLeaf(WindowNode* node);
+    bool        WindowNode_IsOccupied(WindowNode* node);
+    WindowSide  WindowNode_GetWindowSide(WindowNode* node);
+    void        WindowNode_Dump(WindowNode* node);
+    
     Rect<i32> ScreenSize;
     u32 WindowCount;
     WindowNode* Root;
@@ -43,14 +50,6 @@ struct YUBI_API Screen
     u32 PaddingBottom;
     
     DisplayMode Mode;
-};
-
-template<typename T>
-bool IsInRange(T value, T min, T max)
-{
-    if (value >= min && value <= max)
-        return true;
-    return false;
 };
 
 

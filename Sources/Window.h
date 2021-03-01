@@ -22,11 +22,6 @@ enum class WindowSide
 
 struct YUBI_API Window
 {
-    Window(u32 id)
-    {
-        Id = id;
-    }
-    
     u32 Id;
     HWND Handle;
     WCHAR* Title;

@@ -10,7 +10,7 @@ Screen::Screen(i32 width, i32 height)
     Ratio = 0.5f;
     Gap = 0.0f; 
     
-    Root = new WindowNode();
+    Root = (WindowNode*)VirtualAlloc(0, sizeof(WindowNode), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     WindowCount = 0;
     
     Root->Rect = Rect<f32>((f32)width, (f32)height);
@@ -18,7 +18,7 @@ Screen::Screen(i32 width, i32 height)
 
 void Screen::AddWindow(Window* window)
 {
-    if (!IsNodeOccupied(Root) && IsLeafNode(Root))
+    if (!WindowNode_IsOccupied(Root) && WindowNode_IsLeaf(Root))
     {
         Root->Window = window;
         Root->Parent = nullptr;
@@ -26,46 +26,88 @@ void Screen::AddWindow(Window* window)
     }
     else if (Mode == DisplayMode::BSP)
     {
-        auto* leaf = GetFirstLeaf(Root);
-        CreateWindowNodes(leaf, window);
+        auto* leaf = WindowNode_GetFirstLeaf(Root);
+        Tree_CreateNode(leaf, window);
         WindowCount += 1;
     }
 }
 
-void Screen::CreateWindowNodes(WindowNode* node, Window* window)
+void Screen::RemoveWindow(HWND)
 {
-    // NOTE(Mikyan): memset?
+    // TODO(Mikyan): Remove node from tree and reorganize tree structure.
+}
+
+void Screen::UpdateScreen()
+{
+    HDWP wp = BeginDeferWindowPos(WindowCount);
+    
+    UpdateWindow(wp, Root);
+    
+    EndDeferWindowPos(wp);
+}
+
+void Screen::UpdateWindow(HDWP wp, WindowNode* node)
+{
+    if (wp && node->Window)
+    {
+        wp = DeferWindowPos(wp, node->Window->Handle, HWND_TOP, (i32)node->Rect.X, (i32)node->Rect.Y,
+                            (i32)node->Rect.Width, (i32)node->Rect.Height, SWP_NOCOPYBITS);
+    }
+    
+    if (node->Left)
+        UpdateWindow(wp, node->Left);
+    if (node->Right)
+        UpdateWindow(wp, node->Right);
+}
+
+void Screen::Tree_CreateNode(WindowNode* parent, Window* window)
+{
     WindowNode* left = (WindowNode*)VirtualAlloc(0, sizeof(WindowNode), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     WindowNode* right = (WindowNode*)VirtualAlloc(0, sizeof(WindowNode), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     
-    if (GetWindowSide(node) == WindowSide::RIGHT)
+    if (WindowNode_GetWindowSide(parent) == WindowSide::RIGHT)
     {
         right->Window = window;
-        left->Window = node->Window;
+        left->Window = parent->Window;
     }
     else
     {
         left->Window = window;
-        right->Window = node->Window;
+        right->Window = parent->Window;
     }
     
-    node->Window = nullptr;
-    right->Parent = node;
-    left->Parent = node;
+    parent->Window = nullptr;
+    right->Parent = parent;
+    left->Parent = parent;
     
-    node->Right = right;
-    node->Left = left;
+    parent->Right = right;
+    parent->Left = left;
     
-    Split(node);
+    WindowNode_Split(parent);
 }
 
-void Screen::Split(WindowNode* node)
+void Screen::Tree_Delete(WindowNode* root)
+{
+    if (root)
+    {
+        if (root->Left)
+            Tree_Delete(root->Left);
+        if (root->Right)
+            Tree_Delete(root->Right);
+        
+        if (!VirtualFree(root, 0, MEM_RELEASE))
+        {
+            // NOTE(Mikyan): Logging.
+        }
+    }
+}
+
+void Screen::WindowNode_Split(WindowNode* node)
 {
     if (node->Split == SplitMode::NONE)
     {
         node->Split = node->Rect.Width / node->Rect.Height >= ScreenRatio ? SplitMode::VERTICAL : SplitMode::HORIZONTAL;
     }
-    
     
     if (node->Split == SplitMode::VERTICAL)
     {
@@ -93,71 +135,51 @@ void Screen::Split(WindowNode* node)
     }
 }
 
-void Screen::UpdateScreen()
+void Screen::WindowNode_Swap(WindowNode* a, WindowNode* b)
 {
-    HDWP wp = BeginDeferWindowPos(WindowCount);
-    
-    UpdateWindow(wp, Root);
-    
-    EndDeferWindowPos(wp);
+    // NOTE(Mikyan): We only swap the window handles?
+    auto* tmp = a->Window;
+    a->Window = b->Window;
+    b->Window = tmp;
 }
 
-void Screen::UpdateWindow(HDWP wp, WindowNode* node)
-{
-    if (wp && node->Window)
-    {
-        wp = DeferWindowPos(wp, node->Window->Handle, HWND_TOP, (i32)node->Rect.X, (i32)node->Rect.Y,
-                            (i32)node->Rect.Width, (i32)node->Rect.Height, SWP_NOCOPYBITS);
-    }
-    
-    if (node->Left)
-        UpdateWindow(wp, node->Left);
-    if (node->Right)
-        UpdateWindow(wp, node->Right);
-}
-
-void Screen::Dump(WindowNode* node)
-{
-    if (node->Left)
-        Dump(node->Left);
-    if (node->Right)
-        Dump(node->Right);
-    
-    if (node->Window)
-        printf("[Title] %ws, [Size] %fx%f\n[Split] %d\n[Side]%d\n",node->Window->Title, node->Rect.Width, node->Rect.Height, node->Split, node->Side);
-}
-
-WindowNode* Screen::GetFirstLeaf(WindowNode* node)
+WindowNode* Screen::WindowNode_GetFirstLeaf(WindowNode* node)
 {
     auto* tmp = node;
     
-    while (!IsLeafNode(tmp))
+    while (!WindowNode_IsLeaf(tmp))
         tmp = tmp->Left;
     
     return tmp;
 }
 
-WindowNode* Screen::GetLastLeaf(WindowNode* node)
+WindowNode* Screen::WindowNode_GetLastLeaf(WindowNode* node)
 {
     auto* tmp = node;
     
-    while(!IsLeafNode(tmp))
+    while(!WindowNode_IsLeaf(tmp))
         tmp = tmp->Right;
     
     return tmp;
 }
 
-bool Screen::IsLeafNode(WindowNode* node)
+bool Screen::WindowNode_IsLeaf(WindowNode* node)
 {
     return node->Left == nullptr && node->Right == nullptr;
 }
 
-bool Screen::IsNodeOccupied(WindowNode* node)
+bool Screen::WindowNode_IsOccupied(WindowNode* node)
 {
     return node->Window != nullptr;
 }
 
-WindowSide Screen::GetWindowSide(WindowNode* node)
+WindowSide Screen::WindowNode_GetWindowSide(WindowNode* node)
 {
     return node->Side != WindowSide::NONE ? node->Side : WindowSide::RIGHT;
+}
+
+
+void Screen::WindowNode_Dump(WindowNode* node)
+{
+    // TODO(Mikyan): Dump node information.
 }

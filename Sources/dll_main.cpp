@@ -61,17 +61,18 @@ BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
     if (!IsWindowVisible(window) || length == 0)
         return TRUE;
     
-    Window* w = new Window(WindowIdx++);
+    Window* w = (Window*)VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     
     w->Handle = window;
-    w->Title = new WCHAR[length+1]();
+    w->Title = (WCHAR*)VirtualAlloc(0, sizeof(WCHAR) * (length + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     GetWindowTextW(window, w->Title, length+1);
     
     for(const auto& iTitle : IgnoredWindows)
     {
         if (wcscmp(w->Title, iTitle) == 0)
         {
-            delete w;
+            VirtualFree(w->Title, 0, MEM_RELEASE);
+            VirtualFree(w, 0, MEM_RELEASE);
             return TRUE;
         }
     }
@@ -96,9 +97,9 @@ BOOL CALLBACK EnumMonitorsCallback(HMONITOR monitor, HDC, LPRECT, LPARAM)
         return TRUE;
     }
     
-    auto* nMonitor = new Monitor();
+    auto* nMonitor = (Monitor*)VirtualAlloc(0, sizeof(Monitor), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     nMonitor->MonitorIndex = MonitorIdx++;
-    nMonitor->MonitorName = new CHAR[CCHDEVICENAME+1]();
+    nMonitor->MonitorName = (CHAR*)VirtualAlloc(0, sizeof(CHAR) * (CCHDEVICENAME + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     memcpy(nMonitor->MonitorName, info.szDevice, CCHDEVICENAME);
     nMonitor->MonitorArea = Rect<i32>(info.rcMonitor.right, info.rcMonitor.bottom);
     nMonitor->WorkingArea = Rect<i32>(info.rcWork.right, info.rcWork.bottom);
