@@ -43,20 +43,48 @@ void Screen::RemoveWindow(HWND handle)
         return;
     }
     
+    // @Clean-up this?
     if (WindowNode_IsLeftChild(node))
     {
         // NOTE(Mikyan): ??
-        node->Parent = node->Parent->Right;
+        memcpy(node->Parent, node->Parent->Right, sizeof(WindowNode));
+        
+        if (!VirtualFree(node, 0, MEM_RELEASE))
+        {
+            // TODO(Mikyan): Logging.
+            return;
+        }
+        
+        if (!VirtualFree(node->Parent->Right, 0, MEM_RELEASE))
+        {
+            // TODO(Mikyan): Logging.
+            return;
+        }
     }
     else if (WindowNode_IsRightChild(node))
     {
-        node->Parent = node->Parent->Left;
+        memcpy(node->Parent, node->Parent->Left, sizeof(WindowNode));
+        
+        if (!VirtualFree(node, 0, MEM_RELEASE))
+        {
+            // TODO(Mikyan): Logging.
+            return;
+        }
+        
+        if (!VirtualFree(node->Parent->Left, 0, MEM_RELEASE))
+        {
+            // TODO(Mikyan): Logging.
+            return;
+        }
     }
-    
-    if (!VirtualFree(node, 0, MEM_RELEASE))
+    else
     {
-        // TODO(Mikyan): Logging.
-        return;
+        // NOTE(Mikyan): Root node?
+        if (!VirtualFree(node, 0, MEM_RELEASE))
+        {
+            // TODO(Mikyan): Logging.
+            return;
+        }
     }
     
     WindowCount -= 1;
