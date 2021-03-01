@@ -3,6 +3,8 @@
 #include "yubi.h"
 #include <iostream>
 
+// NOTE(Mikyan): For global keybinds/shortcuts see RegisterHotKey / UnregisterHotKey.
+// NOTE(Mikyan): Retreive focused window handle with GetFocus.
 int main()
 {
     auto handle = LoadLibraryA("yubi");

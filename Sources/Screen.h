@@ -12,7 +12,7 @@ enum class DisplayMode
     // STACK
 };
 
-// NOTE(Mikyan): At some point, we'll could replace Window pointers by IDs?
+// NOTE(Mikyan): At some point, we could replace Window pointers by IDs?
 struct YUBI_API Screen
 {
     Screen(i32 width, i32 height);
