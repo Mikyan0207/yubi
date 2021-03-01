@@ -32,9 +32,34 @@ void Screen::AddWindow(Window* window)
     }
 }
 
-void Screen::RemoveWindow(HWND)
+void Screen::RemoveWindow(HWND handle)
 {
     // TODO(Mikyan): Remove node from tree and reorganize tree structure.
+    auto* node = WindowNode_GetFromWindowHandle(Root, handle);
+    
+    if (node == nullptr)
+    {
+        // TODO(Mikyan): Logging.
+        return;
+    }
+    
+    if (WindowNode_IsLeftChild(node))
+    {
+        // NOTE(Mikyan): ??
+        node->Parent = node->Parent->Right;
+    }
+    else if (WindowNode_IsRightChild(node))
+    {
+        node->Parent = node->Parent->Left;
+    }
+    
+    if (!VirtualFree(node, 0, MEM_RELEASE))
+    {
+        // TODO(Mikyan): Logging.
+        return;
+    }
+    
+    WindowCount -= 1;
 }
 
 void Screen::UpdateScreen()
@@ -78,7 +103,9 @@ void Screen::Tree_CreateNode(WindowNode* parent, Window* window)
     
     parent->Window = nullptr;
     right->Parent = parent;
+    right->Side = WindowSide::RIGHT;
     left->Parent = parent;
+    left->Side = WindowSide::LEFT;
     
     parent->Right = right;
     parent->Left = left;
@@ -163,6 +190,20 @@ WindowNode* Screen::WindowNode_GetLastLeaf(WindowNode* node)
     return tmp;
 }
 
+WindowNode* Screen::WindowNode_GetFromWindowHandle(WindowNode* node, HWND handle)
+{
+    if (node->Window && node->Window->Handle == handle)
+        return node;
+    
+    if (node->Left)
+        return WindowNode_GetFromWindowHandle(node->Left, handle);
+    
+    if (node->Right)
+        return WindowNode_GetFromWindowHandle(node->Right, handle);
+    
+    return nullptr;
+}
+
 bool Screen::WindowNode_IsLeaf(WindowNode* node)
 {
     return node->Left == nullptr && node->Right == nullptr;
@@ -171,6 +212,28 @@ bool Screen::WindowNode_IsLeaf(WindowNode* node)
 bool Screen::WindowNode_IsOccupied(WindowNode* node)
 {
     return node->Window != nullptr;
+}
+
+bool Screen::WindowNode_IsLeftChild(WindowNode* node)
+{
+    if (node->Side != WindowSide::NONE)
+        return node->Side == WindowSide::LEFT;
+    
+    if (!node->Parent)
+        return false;
+    
+    return node->Parent->Left == node;
+}
+
+bool Screen::WindowNode_IsRightChild(WindowNode* node)
+{
+    if (node->Side != WindowSide::NONE)
+        return node->Side == WindowSide::RIGHT;
+    
+    if (!node->Parent)
+        return false;
+    
+    return node->Parent->Right == node;
 }
 
 WindowSide Screen::WindowNode_GetWindowSide(WindowNode* node)
