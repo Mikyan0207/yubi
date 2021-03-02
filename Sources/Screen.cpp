@@ -107,6 +107,13 @@ void Screen::UpdateWindow(HDWP wp, WindowNode* node)
     {
         wp = DeferWindowPos(wp, node->Window->Handle, HWND_TOP, (i32)node->Rect.X, (i32)node->Rect.Y,
                             (i32)node->Rect.Width, (i32)node->Rect.Height, SWP_NOCOPYBITS);
+        
+        
+        printf("[Window] %ws\n Size: %f - %f\n", node->Window->Title, node->Rect.Width, node->Rect.Height);
+        
+        
+        // Should force the window to redraw. Not the best solution..
+        SetFocus(node->Window->Handle);
     }
     
     if (node->Left)
@@ -177,6 +184,11 @@ void Screen::WindowNode_Split(WindowNode* node)
         node->Right->Rect.Width *= (1 - Ratio);
         node->Right->Rect.X += Gap;
         node->Right->Rect.Width -= Gap;
+        
+        node->Left->Rect.Y += 4;
+        node->Left->Rect.Height -= 4;
+        node->Right->Rect.Height -= 4;
+        node->Right->Rect.Y += 4;
     }
     else
     {
@@ -189,7 +201,13 @@ void Screen::WindowNode_Split(WindowNode* node)
         node->Right->Rect.Height *= (1 - Ratio);
         node->Right->Rect.Y += Gap;
         node->Right->Rect.Height -= Gap;
+        
+        node->Left->Rect.Y += 4;
+        node->Left->Rect.Height -= 4;
+        node->Right->Rect.Height -= 4;
+        node->Right->Rect.Y += 4;
     }
+    
 }
 
 void Screen::WindowNode_Swap(WindowNode* a, WindowNode* b)

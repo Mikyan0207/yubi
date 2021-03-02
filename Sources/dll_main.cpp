@@ -17,7 +17,7 @@
 // Add Padding options to screen.
 // Fix gap/ratio when resizing since Windows10 use ints for position/size of a window..
 // /!\ ShellHostExperience.exe is detected as a Window and it's annoying af.
-// /!\ Search if we can override the min size of a window.
+// /!\ Search if we can override the min size of a window. -> First result says it's not possible
 
 static std::vector<Monitor*> Monitors;
 
@@ -28,6 +28,11 @@ static const WCHAR* IgnoredWindows[] = {
 
 static u32 WindowIdx = 0;
 static u32 MonitorIdx = 0;
+
+static bool WinEventWindowIsValid(LONG idObject, LONG idChild, HWND hwnd)
+{
+    return idObject == OBJID_WINDOW && idChild == CHILDID_SELF && hwnd != nullptr;
+}
 
 static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
 {
@@ -50,49 +55,29 @@ static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
     return nullptr;
 }
 
+// NOTE(Mikyan): This function is declared extern "C" to avoid name mangling with C++
+// since we load it with GetProcAddress.
 extern "C" {
     YUBI_API void CALLBACK WinEventCallback(HWINEVENTHOOK hook, DWORD event, HWND window, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
     {
-        if (event == EVENT_OBJECT_CREATE && window != nullptr)
+        if (WinEventWindowIsValid(idObject, idChild, window))
         {
-            const auto length = GetWindowTextLengthW(window);
-            
-            if (!IsWindowVisible(window) || length == 0)
-                return;
-            
-            Window* w = (Window*)VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-            
-            w->Handle = window;
-            w->Title = (WCHAR*)VirtualAlloc(0, sizeof(WCHAR) * (length + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-            GetWindowTextW(window, w->Title, length+1);
-            
-            for(const auto& iTitle : IgnoredWindows)
+            // TODO(Mikyan): Handle cloaking.
+            // TODO(Mikyan): Handle Minimize/Maximize
+            // TODO(Mikyan): Handle 
+            switch (event)
             {
-                if (wcscmp(w->Title, iTitle) == 0)
+                case EVENT_OBJECT_SHOW:
                 {
-                    VirtualFree(w->Title, 0, MEM_RELEASE);
-                    VirtualFree(w, 0, MEM_RELEASE);
-                    return;
-                }
+                    printf("OBJ SHOW - NEW WINDOW\n");
+                } break;
+                case EVENT_OBJECT_DESTROY:
+                {
+                    printf("WINDOW DESTROYED\n");
+                } break;
+                default:
+                break;
             }
-            
-            auto* monitor = GetMonitorFromWindow(w->Handle, MONITOR_DEFAULTTONEAREST);
-            
-            if (monitor != nullptr)
-                monitor->Display->AddWindow(w);
-            
-            return;
-        }
-        
-        // NOTE(Mikyan): Even if the window is destroyed
-        // the handle is still valid when we receive this event. 
-        if (event == EVENT_OBJECT_DESTROY && window != nullptr)
-        {
-            auto* monitor = GetMonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-            
-            if (monitor != nullptr)
-                monitor->Display->RemoveWindow(window);
-            return;
         }
     }
 }
@@ -122,6 +107,10 @@ BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
         }
     }
     
+    // TODO(Mikyan): Get Border/Offset of the window
+    // DwmGetWindowAttribute() with DWMWA_EXTENDED_FRAME_BOUNDS
+    
+    
     // NOTE(Mikyan): If we fail to get the corresponding Monitor, we take the nearest
     // from this window if we can, otherwise we return nullptr.
     auto* monitor = GetMonitorFromWindow(w->Handle, MONITOR_DEFAULTTONEAREST);
@@ -147,10 +136,12 @@ BOOL CALLBACK EnumMonitorsCallback(HMONITOR monitor, HDC, LPRECT, LPARAM)
     nMonitor->MonitorName = (CHAR*)VirtualAlloc(0, sizeof(CHAR) * (CCHDEVICENAME + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     memcpy(nMonitor->MonitorName, info.szDevice, CCHDEVICENAME);
     nMonitor->MonitorArea = Rect<i32>(info.rcMonitor.right, info.rcMonitor.bottom);
-    nMonitor->WorkingArea = Rect<i32>(info.rcWork.right, info.rcWork.bottom);
+    nMonitor->WorkingArea = Rect<i32>(info.rcWork.right - std::abs(info.rcWork.left), info.rcWork.bottom - info.rcWork.top);
     nMonitor->Display = new Screen(nMonitor->WorkingArea.Width, nMonitor->WorkingArea.Height);
     
     Monitors.emplace_back(nMonitor);
+    
+    printf("Monitor: %s\n", nMonitor->MonitorName);
     
     return TRUE;
 }
