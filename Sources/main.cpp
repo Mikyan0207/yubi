@@ -24,4 +24,5 @@ int main()
     }
     
     UnhookWinEvent(hook);
+    FreeLibrary(handle);
 }

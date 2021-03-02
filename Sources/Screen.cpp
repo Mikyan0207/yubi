@@ -18,6 +18,8 @@ Screen::Screen(i32 width, i32 height)
 
 void Screen::AddWindow(Window* window)
 {
+    printf("New Window: %ws\n", window->Title);
+    
     if (!WindowNode_IsOccupied(Root) && WindowNode_IsLeaf(Root))
     {
         Root->Window = window;
