@@ -13,9 +13,10 @@
 // Edge is broken.
 
 // TODO(Mikyan): Remove std::vector<Monitor*>, use custom allocator instead of new?
-// Force redraw when resizing windows.
+// Force redraw when resizing windows. -> Currently done by focusing each window when resizing
 // Handle negative values when moving windows.
 // Add Padding options to screen.
+// Get window borders size and calculate offset.
 // Fix gap/ratio when resizing since Windows10 use ints for position/size of a window..
 // /!\ ShellHostExperience.exe is detected as a Window and it's annoying af.
 // /!\ Search if we can override the min size of a window. -> First result says it's not possible
@@ -56,8 +57,8 @@ static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
     return nullptr;
 }
 
-// NOTE(Mikyan): This function is declared extern "C" to avoid name mangling with C++
-// since we load it with GetProcAddress.
+// NOTE(Mikyan): These functions are declared extern "C" to avoid name mangling with C++
+// since we load them with GetProcAddress.
 extern "C" {
     YUBI_API void CALLBACK WinEventCallback(HWINEVENTHOOK hook, DWORD event, HWND window, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
     {
@@ -75,6 +76,10 @@ extern "C" {
                 case EVENT_OBJECT_DESTROY:
                 {
                     printf("WINDOW DESTROYED\n");
+                    auto* monitor = GetMonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
+                    
+                    if (monitor != nullptr)
+                        monitor->HandleWindowDestroy(window);
                 } break;
                 default:
                 break;

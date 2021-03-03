@@ -18,7 +18,7 @@ struct YUBI_API Screen
     Screen(i32 width, i32 height);
     
     void AddWindow(Window* window);
-    void RemoveWindow(HWND windowHandle);
+    bool RemoveWindow(HWND windowHandle);
     
     void UpdateScreen();
     void UpdateWindowNode(WindowNode* node);

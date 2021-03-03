@@ -22,3 +22,12 @@ void Monitor::HandleWindowSwap(SwapDirection direction)
     }
     Display->UpdateScreen();
 }
+
+void Monitor::HandleWindowDestroy(HWND hwnd)
+{
+    if (hwnd == nullptr)
+        return;
+    
+    if (Display->RemoveWindow(hwnd))
+        Display->UpdateScreen();
+}

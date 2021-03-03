@@ -34,7 +34,7 @@ void Screen::AddWindow(Window* window)
     }
 }
 
-void Screen::RemoveWindow(HWND handle)
+bool Screen::RemoveWindow(HWND handle)
 {
     // TODO(Mikyan): Remove node from tree and reorganize tree structure.
     auto* node = WindowNode_GetFromWindowHandle(handle);
@@ -42,7 +42,7 @@ void Screen::RemoveWindow(HWND handle)
     if (node == nullptr)
     {
         // TODO(Mikyan): Logging.
-        return;
+        return false;
     }
     
     // @Clean-up this?
@@ -51,32 +51,32 @@ void Screen::RemoveWindow(HWND handle)
         // NOTE(Mikyan): ??
         memcpy(node->Parent, node->Parent->Right, sizeof(WindowNode));
         
-        if (!VirtualFree(node, 0, MEM_RELEASE))
-        {
-            // TODO(Mikyan): Logging.
-            return;
-        }
-        
         if (!VirtualFree(node->Parent->Right, 0, MEM_RELEASE))
         {
             // TODO(Mikyan): Logging.
-            return;
+            return false;
+        }
+        
+        if (!VirtualFree(node, 0, MEM_RELEASE))
+        {
+            // TODO(Mikyan): Logging.
+            return false;
         }
     }
     else if (WindowNode_IsRightChild(node))
     {
         memcpy(node->Parent, node->Parent->Left, sizeof(WindowNode));
         
-        if (!VirtualFree(node, 0, MEM_RELEASE))
-        {
-            // TODO(Mikyan): Logging.
-            return;
-        }
-        
         if (!VirtualFree(node->Parent->Left, 0, MEM_RELEASE))
         {
             // TODO(Mikyan): Logging.
-            return;
+            return false;
+        }
+        
+        if (!VirtualFree(node, 0, MEM_RELEASE))
+        {
+            // TODO(Mikyan): Logging.
+            return false;
         }
     }
     else
@@ -85,11 +85,13 @@ void Screen::RemoveWindow(HWND handle)
         if (!VirtualFree(node, 0, MEM_RELEASE))
         {
             // TODO(Mikyan): Logging.
-            return;
+            return false;
         }
     }
     
     WindowCount -= 1;
+    
+    return true;
 }
 
 void Screen::UpdateScreen()
