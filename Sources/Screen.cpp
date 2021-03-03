@@ -178,36 +178,25 @@ void Screen::WindowNode_Split(WindowNode* node)
     if (node->Split == SplitMode::VERTICAL)
     {
         node->Left->Rect = node->Rect;
+        node->Left->Rect.Y += 4;
         node->Left->Rect.Width *= Ratio;
-        node->Left->Rect.Width -= Gap;
+        node->Left->Rect.Height -= 4;
         
         node->Right->Rect = node->Rect;
         node->Right->Rect.X += (node->Rect.Width * Ratio);
-        node->Right->Rect.Width *= (1 - Ratio);
-        node->Right->Rect.X += Gap;
-        node->Right->Rect.Width -= Gap;
-        
-        node->Left->Rect.Y += 4;
-        node->Left->Rect.Height -= 4;
-        node->Right->Rect.Height -= 4;
         node->Right->Rect.Y += 4;
+        node->Right->Rect.Width *= (1 - Ratio);
+        node->Right->Rect.Width -= 4;
+        node->Right->Rect.Height -= 4;
     }
     else
     {
         node->Left->Rect = node->Rect;
         node->Left->Rect.Height *= Ratio;
-        node->Left->Rect.Height -= Gap;
         
         node->Right->Rect = node->Rect;
         node->Right->Rect.Y += (node->Rect.Height * Ratio);
         node->Right->Rect.Height *= (1 - Ratio);
-        node->Right->Rect.Y += Gap;
-        node->Right->Rect.Height -= Gap;
-        
-        node->Left->Rect.Y += 4;
-        node->Left->Rect.Height -= 4;
-        node->Right->Rect.Height -= 4;
-        node->Right->Rect.Y += 4;
     }
     
 }

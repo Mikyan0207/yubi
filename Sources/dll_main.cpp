@@ -31,12 +31,12 @@ static const WCHAR* IgnoredWindows[] = {
 static u32 WindowIdx = 0;
 static u32 MonitorIdx = 0;
 
-static bool WinEventWindowIsValid(LONG idObject, LONG idChild, HWND hwnd)
+internal bool WinEventWindowIsValid(LONG idObject, LONG idChild, HWND hwnd)
 {
     return idObject == OBJID_WINDOW && idChild == CHILDID_SELF && hwnd != nullptr;
 }
 
-static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
+internal Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
 {
     auto win32Monitor = MonitorFromWindow(window, flags);
     
@@ -55,6 +55,44 @@ static Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
     }
     
     return nullptr;
+}
+
+
+internal bool TryRegisterWindow(HWND window)
+{
+    const auto length = GetWindowTextLengthW(window);
+    
+    if (!IsWindowVisible(window) || length == 0 || IsIconic(window))
+        return false;
+    
+    Window* w = (Window*)VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    
+    w->Handle = window;
+    w->Title = (WCHAR*)VirtualAlloc(0, sizeof(WCHAR) * (length + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    GetWindowTextW(window, w->Title, length+1);
+    
+    for(const auto& iTitle : IgnoredWindows)
+    {
+        if (wcscmp(w->Title, iTitle) == 0)
+        {
+            VirtualFree(w->Title, 0, MEM_RELEASE);
+            VirtualFree(w, 0, MEM_RELEASE);
+            return false;
+        }
+    }
+    
+    // TODO(Mikyan): Get Border/Offset of the window
+    // DwmGetWindowAttribute() with DWMWA_EXTENDED_FRAME_BOUNDS
+    RECT frameBounds{};
+    
+    // NOTE(Mikyan): If we fail to get the corresponding Monitor, we take the nearest
+    // from this window if we can, otherwise we return nullptr.
+    auto* monitor = GetMonitorFromWindow(w->Handle, MONITOR_DEFAULTTONEAREST);
+    
+    if (monitor != nullptr)
+        monitor->Display->AddWindow(w);
+    
+    return true;
 }
 
 // NOTE(Mikyan): These functions are declared extern "C" to avoid name mangling with C++
@@ -122,39 +160,7 @@ extern "C" {
 
 BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
 {
-    const auto length = GetWindowTextLengthW(window);
-    
-    // NOTE(Mikyan): We don't want to stop until we've checked all
-    // windows.
-    if (!IsWindowVisible(window) || length == 0 || IsIconic(window))
-        return TRUE;
-    
-    Window* w = (Window*)VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-    
-    w->Handle = window;
-    w->Title = (WCHAR*)VirtualAlloc(0, sizeof(WCHAR) * (length + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-    GetWindowTextW(window, w->Title, length+1);
-    
-    for(const auto& iTitle : IgnoredWindows)
-    {
-        if (wcscmp(w->Title, iTitle) == 0)
-        {
-            VirtualFree(w->Title, 0, MEM_RELEASE);
-            VirtualFree(w, 0, MEM_RELEASE);
-            return TRUE;
-        }
-    }
-    
-    // TODO(Mikyan): Get Border/Offset of the window
-    // DwmGetWindowAttribute() with DWMWA_EXTENDED_FRAME_BOUNDS
-    
-    
-    // NOTE(Mikyan): If we fail to get the corresponding Monitor, we take the nearest
-    // from this window if we can, otherwise we return nullptr.
-    auto* monitor = GetMonitorFromWindow(w->Handle, MONITOR_DEFAULTTONEAREST);
-    
-    if (monitor != nullptr)
-        monitor->Display->AddWindow(w);
+    TryRegisterWindow(window);
     
     return TRUE;
 }
