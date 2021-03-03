@@ -31,11 +31,14 @@ struct YUBI_API Screen
     void        WindowNode_Swap(WindowNode* a, WindowNode* b);
     WindowNode* WindowNode_GetFirstLeaf(WindowNode* node);
     WindowNode* WindowNode_GetLastLeaf(WindowNode* node);
-    WindowNode* WindowNode_GetFromWindowHandle(WindowNode* node, HWND handle);
+    WindowNode* WindowNode_GetNextLeaf(WindowNode* node);
+    WindowNode* WindowNode_GetPrevLeaf(WindowNode* node);
+    WindowNode* WindowNode_GetFromWindowHandle(HWND handle);
     bool        WindowNode_IsLeaf(WindowNode* node);
     bool        WindowNode_IsOccupied(WindowNode* node);
     bool        WindowNode_IsLeftChild(WindowNode* node);
     bool        WindowNode_IsRightChild(WindowNode* node);
+    bool        WindowNode_IsChild(WindowNode* node);
     WindowSide  WindowNode_GetWindowSide(WindowNode* node);
     void        WindowNode_Dump(WindowNode* node);
     

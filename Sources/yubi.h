@@ -1,6 +1,12 @@
 #ifndef YUBI_H
 #define YUBI_H
 
+#if !defined(internal)
+#define internal static
+#endif
+#define local_persist static
+#define global static
+
 #if defined(_MSC_VER)
 #ifdef YUBI_EXPORTS
 #define YUBI_API __declspec(dllexport)

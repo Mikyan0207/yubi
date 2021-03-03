@@ -37,7 +37,7 @@ void Screen::AddWindow(Window* window)
 void Screen::RemoveWindow(HWND handle)
 {
     // TODO(Mikyan): Remove node from tree and reorganize tree structure.
-    auto* node = WindowNode_GetFromWindowHandle(Root, handle);
+    auto* node = WindowNode_GetFromWindowHandle(handle);
     
     if (node == nullptr)
     {
@@ -238,16 +238,35 @@ WindowNode* Screen::WindowNode_GetLastLeaf(WindowNode* node)
     return tmp;
 }
 
-WindowNode* Screen::WindowNode_GetFromWindowHandle(WindowNode* node, HWND handle)
+WindowNode* Screen::WindowNode_GetNextLeaf(WindowNode* node)
 {
-    if (node->Window && node->Window->Handle == handle)
-        return node;
+    if (node->Parent == nullptr)
+        return nullptr;
     
-    if (node->Left)
-        return WindowNode_GetFromWindowHandle(node->Left, handle);
+    if (WindowNode_IsRightChild(node))
+        return WindowNode_GetNextLeaf(node->Parent);
     
-    if (node->Right)
-        return WindowNode_GetFromWindowHandle(node->Right, handle);
+    if (WindowNode_IsLeaf(node->Parent->Right))
+        return node->Parent->Right;
+    
+    return WindowNode_GetFirstLeaf(node->Parent->Right->Left);
+}
+
+WindowNode* WindowNode_GetPrevLeaf(WindowNode* node)
+{
+    return nullptr;
+}
+
+WindowNode* Screen::WindowNode_GetFromWindowHandle(HWND handle)
+{
+    auto* n = WindowNode_GetFirstLeaf(Root);
+    
+    while (n)
+    {
+        if (n->Window && n->Window->Handle == handle)
+            return n;
+        n = WindowNode_GetNextLeaf(n);
+    }
     
     return nullptr;
 }
@@ -282,6 +301,11 @@ bool Screen::WindowNode_IsRightChild(WindowNode* node)
         return false;
     
     return node->Parent->Right == node;
+}
+
+bool Screen::WindowNode_IsChild(WindowNode* node)
+{
+    return node != nullptr && node->Parent != nullptr;
 }
 
 WindowSide Screen::WindowNode_GetWindowSide(WindowNode* node)

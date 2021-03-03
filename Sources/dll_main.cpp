@@ -6,6 +6,7 @@
 #include "Window.h"
 #include "Screen.h"
 #include "Monitor.h"
+#include "Keys.h"
 
 // NOTE(Mikyan): Somehow, I can't get the RECT for certain window like
 // Edge for example.
@@ -80,6 +81,38 @@ extern "C" {
             }
         }
     }
+    
+    YUBI_API void HandleHotKey(LPARAM lParam)
+    {
+        UINT modifier = LOWORD(lParam);
+        UINT key = HIWORD(lParam);
+        
+        if (modifier == MOD_ALT && key == KEY_K)
+        {
+            printf("Swap windows.\n");
+            auto hwnd = GetForegroundWindow();
+            
+            auto* monitor = GetMonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            
+            if (monitor != nullptr)
+            {
+                monitor->HandleWindowSwap(SwapDirection::CW);
+            }
+        }
+        
+        if (modifier == MOD_ALT && key == KEY_L)
+        {
+            printf("Swap windows.\n");
+            auto hwnd = GetForegroundWindow();
+            
+            auto* monitor = GetMonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            
+            if (monitor != nullptr)
+            {
+                monitor->HandleWindowSwap(SwapDirection::CCW);
+            }
+        }
+    }
 }
 
 BOOL CALLBACK EnumWindowCallback(HWND window, LPARAM)
@@ -135,8 +168,9 @@ BOOL CALLBACK EnumMonitorsCallback(HMONITOR monitor, HDC, LPRECT, LPARAM)
     nMonitor->MonitorIndex = MonitorIdx++;
     nMonitor->MonitorName = (CHAR*)VirtualAlloc(0, sizeof(CHAR) * (CCHDEVICENAME + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     memcpy(nMonitor->MonitorName, info.szDevice, CCHDEVICENAME);
+    nMonitor->Position = Vector2<i32>(info.rcWork.left, info.rcWork.top);
     nMonitor->MonitorArea = Rect<i32>(info.rcMonitor.right, info.rcMonitor.bottom);
-    nMonitor->WorkingArea = Rect<i32>(info.rcWork.right - std::abs(info.rcWork.left), info.rcWork.bottom - info.rcWork.top);
+    nMonitor->WorkingArea = Rect<i32>(info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
     nMonitor->Display = new Screen(nMonitor->WorkingArea.Width, nMonitor->WorkingArea.Height);
     
     Monitors.emplace_back(nMonitor);
