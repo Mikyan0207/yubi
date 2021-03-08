@@ -57,12 +57,33 @@ internal Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
     return nullptr;
 }
 
+internal LONG GetExStyles(HWND window)
+{
+    return GetWindowLongW(window, GWL_EXSTYLE);
+}
+
+internal LONG GetStyles(HWND window)
+{
+    return GetWindowLongW(window, GWL_STYLE);
+}
 
 internal bool TryRegisterWindow(HWND window)
 {
     const auto length = GetWindowTextLengthW(window);
     
-    if (!IsWindowVisible(window) || length == 0 || IsIconic(window))
+    if (!IsWindowVisible(window) || !IsWindow(window) || IsIconic(window) || !(GetWindowLong(window, GWL_STYLE) & WS_EX_APPWINDOW))
+        return false;
+    
+    auto exStyles = GetExStyles(window);
+    auto styles = GetStyles(window);
+    
+    if (!(styles & WS_CAPTION))
+        return false;
+    if (!(exStyles & WS_EX_WINDOWEDGE))
+        return false;
+    if (exStyles & WS_EX_DLGMODALFRAME)
+        return false;
+    if (exStyles & WS_EX_LAYERED)
         return false;
     
     Window* w = (Window*)VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
