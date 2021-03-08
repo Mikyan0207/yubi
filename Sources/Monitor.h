@@ -16,7 +16,6 @@ enum class SwapDirection
 // if we're getting information for a secondary monitor.
 struct Monitor
 {
-    u32 MonitorIndex;
     CHAR* MonitorName;
     
     HMONITOR Win32Monitor;

@@ -18,7 +18,7 @@ Screen::Screen(i32 width, i32 height)
 
 void Screen::AddWindow(Window* window)
 {
-    printf("New Window: %ws\n", window->Title);
+    //printf("New Window: %ws\n", window->Title);
     
     if (!WindowNode_IsOccupied(Root) && WindowNode_IsLeaf(Root))
     {
@@ -32,6 +32,8 @@ void Screen::AddWindow(Window* window)
         Tree_CreateNode(leaf, window);
         WindowCount += 1;
     }
+    
+    UpdateScreen();
 }
 
 bool Screen::RemoveWindow(HWND handle)
@@ -107,8 +109,8 @@ void Screen::UpdateWindow(HDWP wp, WindowNode* node)
 {
     if (wp && node->Window)
     {
-        wp = DeferWindowPos(wp, node->Window->Handle, HWND_TOP, (i32)node->Rect.X, (i32)node->Rect.Y,
-                            (i32)node->Rect.Width, (i32)node->Rect.Height, SWP_NOCOPYBITS);
+        wp = DeferWindowPos(wp, node->Window->Handle, NULL, (i32)node->Rect.X, (i32)node->Rect.Y,
+                            (i32)node->Rect.Width, (i32)node->Rect.Height, SWP_NOCOPYBITS | SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER);
         
         
         printf("[Window] %ws\n Size: %f - %f\n", node->Window->Title, node->Rect.Width, node->Rect.Height);

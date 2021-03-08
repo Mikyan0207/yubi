@@ -7,6 +7,7 @@
 #include "Screen.h"
 #include "Monitor.h"
 #include "Keys.h"
+#include "Win32Helper.h"
 
 // NOTE(Mikyan): Somehow, I can't get the RECT for certain window like
 // Edge for example.
@@ -27,14 +28,6 @@ static const WCHAR* IgnoredWindows[] = {
     L"Program Manager",
     L"Microsoft Text Input Application",
 };
-
-static u32 WindowIdx = 0;
-static u32 MonitorIdx = 0;
-
-internal bool WinEventWindowIsValid(LONG idObject, LONG idChild, HWND hwnd)
-{
-    return idObject == OBJID_WINDOW && idChild == CHILDID_SELF && hwnd != nullptr;
-}
 
 internal Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
 {
@@ -57,33 +50,15 @@ internal Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
     return nullptr;
 }
 
-internal LONG GetExStyles(HWND window)
-{
-    return GetWindowLongW(window, GWL_EXSTYLE);
-}
-
-internal LONG GetStyles(HWND window)
-{
-    return GetWindowLongW(window, GWL_STYLE);
-}
-
 internal bool TryRegisterWindow(HWND window)
 {
     const auto length = GetWindowTextLengthW(window);
     
-    if (!IsWindowVisible(window) || !IsWindow(window) || IsIconic(window) || !(GetWindowLong(window, GWL_STYLE) & WS_EX_APPWINDOW))
+    if (!IsWindowVisible(window) || length == 0 || IsIconic(window))
         return false;
     
-    auto exStyles = GetExStyles(window);
-    auto styles = GetStyles(window);
-    
-    if (!(styles & WS_CAPTION))
-        return false;
-    if (!(exStyles & WS_EX_WINDOWEDGE))
-        return false;
-    if (exStyles & WS_EX_DLGMODALFRAME)
-        return false;
-    if (exStyles & WS_EX_LAYERED)
+    // Double check
+    if (!Win32Helper::WindowIsValid(window))
         return false;
     
     Window* w = (Window*)VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
@@ -121,7 +96,7 @@ internal bool TryRegisterWindow(HWND window)
 extern "C" {
     YUBI_API void CALLBACK WinEventCallback(HWINEVENTHOOK hook, DWORD event, HWND window, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
     {
-        if (WinEventWindowIsValid(idObject, idChild, window))
+        if (Win32Helper::WinEventWindowIsValid(idObject, idChild, window))
         {
             // TODO(Mikyan): Handle cloaking.
             // TODO(Mikyan): Handle Minimize/Maximize
@@ -131,6 +106,14 @@ extern "C" {
                 case EVENT_OBJECT_SHOW:
                 {
                     printf("OBJ SHOW - NEW WINDOW\n");
+                    if (TryRegisterWindow(window))
+                    {
+                        printf("The window is valid and was added to the tree.\n");
+                    }
+                    else
+                    {
+                        printf("Ignoring invalid Window\n");
+                    }
                 } break;
                 case EVENT_OBJECT_DESTROY:
                 {
@@ -197,7 +180,6 @@ BOOL CALLBACK EnumMonitorsCallback(HMONITOR monitor, HDC, LPRECT, LPARAM)
     }
     
     auto* nMonitor = (Monitor*)VirtualAlloc(0, sizeof(Monitor), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-    nMonitor->MonitorIndex = MonitorIdx++;
     nMonitor->MonitorName = (CHAR*)VirtualAlloc(0, sizeof(CHAR) * (CCHDEVICENAME + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     memcpy(nMonitor->MonitorName, info.szDevice, CCHDEVICENAME);
     nMonitor->Position = Vector2<i32>(info.rcWork.left, info.rcWork.top);
