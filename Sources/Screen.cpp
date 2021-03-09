@@ -245,7 +245,7 @@ WindowNode* Screen::WindowNode_GetNextLeaf(WindowNode* node)
     return WindowNode_GetFirstLeaf(node->Parent->Right->Left);
 }
 
-WindowNode* WindowNode_GetPrevLeaf(WindowNode* node)
+WindowNode* Screen::WindowNode_GetPrevLeaf(WindowNode* node)
 {
     return nullptr;
 }

@@ -27,6 +27,8 @@ struct Monitor
     Screen* Display;
     
     void HandleWindowSwap(SwapDirection direction);
+    void HandleClockwiseRotation();
+    void HandleCounterClockwiseRotation();
     void HandleWindowDestroy(HWND hwnd);
 };
 
