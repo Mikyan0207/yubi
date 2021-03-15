@@ -8,11 +8,10 @@ enum class DisplayMode
 {
     DEFAULT,
     BSP,
-    // FLOAT,
-    // STACK
+    FLOAT,
+    STACK
 };
 
-// NOTE(Mikyan): At some point, we could replace Window pointers by IDs?
 struct YUBI_API Screen
 {
     Screen(i32 width, i32 height);
@@ -41,6 +40,7 @@ struct YUBI_API Screen
     bool        WindowNode_IsChild(WindowNode* node);
     WindowSide  WindowNode_GetWindowSide(WindowNode* node);
     void        WindowNode_Dump(WindowNode* node);
+    bool        WindowNode_IsFullScreen(WindowNode* node);
     
     Rect<i32> ScreenSize;
     u32 WindowCount;

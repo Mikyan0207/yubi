@@ -115,9 +115,9 @@ void Screen::UpdateWindow(HDWP wp, WindowNode* node)
         
         printf("[Window] %ws\n Size: %f - %f\n", node->Window->Title, node->Rect.Width, node->Rect.Height);
         
+        // TODO(Mikyan): Window redrawing and update.
         
-        // Should force the window to redraw. Not the best solution..
-        SetFocus(node->Window->Handle);
+        //SetFocus(node->Window->Handle);
     }
     
     if (node->Left)
@@ -180,16 +180,11 @@ void Screen::WindowNode_Split(WindowNode* node)
     if (node->Split == SplitMode::VERTICAL)
     {
         node->Left->Rect = node->Rect;
-        node->Left->Rect.Y += 4;
         node->Left->Rect.Width *= Ratio;
-        node->Left->Rect.Height -= 4;
         
         node->Right->Rect = node->Rect;
         node->Right->Rect.X += (node->Rect.Width * Ratio);
-        node->Right->Rect.Y += 4;
         node->Right->Rect.Width *= (1 - Ratio);
-        node->Right->Rect.Width -= 4;
-        node->Right->Rect.Height -= 4;
     }
     else
     {
@@ -310,4 +305,12 @@ WindowSide Screen::WindowNode_GetWindowSide(WindowNode* node)
 void Screen::WindowNode_Dump(WindowNode* node)
 {
     // TODO(Mikyan): Dump node information.
+}
+
+bool Screen::WindowNode_IsFullScreen(WindowNode* node)
+{
+    if (node == nullptr || node->Window == nullptr)
+        return false;
+    
+    return node->Window->IsFullScreen;
 }
