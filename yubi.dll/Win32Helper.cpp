@@ -22,3 +22,21 @@ bool Win32Helper::WinEventWindowIsValid(LONG objectId, LONG childId, HWND hwnd)
 {
     return objectId == OBJID_WINDOW && childId == CHILDID_SELF && hwnd != nullptr;
 }
+
+bool Win32Helper::WindowIsCloaked(HWND window)
+{
+    bool isCloaked = false;
+    
+    DwmGetWindowAttribute(window, DWMWA_CLOAKED, &isCloaked, sizeof(bool));
+    
+    return isCloaked;
+}
+
+Rect<i32> Win32Helper::WindowGetFrameBounds(HWND window)
+{
+    RECT rect = {};
+    
+    DwmGetWindowAttribute(window, DWMWA_EXTENDED_FRAME_BOUNDS, &rect, sizeof(RECT));
+    
+    return std::move(Rect<i32>(rect));
+}

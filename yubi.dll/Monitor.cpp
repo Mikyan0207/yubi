@@ -7,17 +7,17 @@ void Monitor::HandleClockwiseRotation()
     if (hwnd == nullptr)
         return;
     
-    auto* node = Display->WindowNode_GetFromWindowHandle(hwnd);
+    auto* node = Display->Window_GetFromWindowHandle(hwnd);
     
     if (node == nullptr)
         return;
     
-    auto* prevNode = Display->WindowNode_GetPrevLeaf(node);
+    auto* prevNode = Display->Window_GetPrevLeaf(node);
     
     if (prevNode == nullptr)
         return;
     
-    Display->WindowNode_Swap(node, prevNode);
+    Display->Window_Swap(node, prevNode);
     Display->UpdateScreen();
 }
 
@@ -28,17 +28,17 @@ void Monitor::HandleCounterClockwiseRotation()
     if (hwnd == nullptr)
         return;
     
-    auto* node = Display->WindowNode_GetFromWindowHandle(hwnd);
+    auto* node = Display->Window_GetFromWindowHandle(hwnd);
     
     if (node == nullptr)
         return;
     
-    auto* nextNode = Display->WindowNode_GetNextLeaf(node);
+    auto* nextNode = Display->Window_GetNextLeaf(node);
     
     if (nextNode == nullptr)
         return;
     
-    Display->WindowNode_Swap(node, nextNode);
+    Display->Window_Swap(node, nextNode);
     Display->UpdateScreen();
 }
 
@@ -58,7 +58,7 @@ void Monitor::HandleSplitDirection()
     if (hwnd == nullptr)
         return;
     
-    auto* node = Display->WindowNode_GetFromWindowHandle(hwnd);
+    auto* node = Display->Window_GetFromWindowHandle(hwnd);
     
     if (node == nullptr)
         return;

@@ -2,9 +2,10 @@
 #define _WINDOW_H
 
 #include <Windows.h>
+#include <string>
 #include "yubi.h"
-#include "Types.h"
 #include "Rect.h"
+#include "Types.h"
 
 enum class SplitMode
 {
@@ -23,19 +24,19 @@ enum class WindowSide
 struct YUBI_API Window
 {
     HWND Handle;
-    WCHAR* Title;
+    std::wstring Title;
+    
+    Rect<f32> Area;
+    Rect<i32> FrameBounds;
+    Rect<f32> Offset;
+    
+    Window* Parent;
+    Window* Left;
+    Window* Right;
     
     bool IsFullScreen;
-};
-
-struct YUBI_API WindowNode
-{
-    Rect<f32> Rect;
-    Window* Window;
-    
-    WindowNode* Parent;
-    WindowNode* Left;
-    WindowNode* Right;
+    bool IsMaximized;
+    bool IsMinimized;
     
     SplitMode Split;
     WindowSide Side = WindowSide::NONE;

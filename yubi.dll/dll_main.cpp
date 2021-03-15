@@ -1,33 +1,26 @@
-#include <vector>
-#include <iostream>
 #include <Windows.h>
 #include <psapi.h>
 
-#include "Window.h"
-#include "Screen.h"
-#include "Monitor.h"
-#include "Keys.h"
-#include "Win32Helper.h"
+#include <vector>
+#include <stdexcept>
 
-// NOTE(Mikyan): Somehow, I can't get the RECT for certain window like
-// Chromium based browsers are broken?
+#include <Monitor.h>
+#include <nt.hpp>
+#include <Keys.h>
+#include <Screen.hpp>
+#include <Window.h>
+#include <Win32Helper.h>
 
 // TODO(Mikyan): Remove std::vector<Monitor*>, use custom allocator instead of new?
-// Force redraw when resizing windows. -> Currently done by focusing each window when resizing
+// Chromium based browsers are broken?
 // Handle negative values when moving windows.
 // Add Padding options to screen.
 // Get window borders size and calculate offset.
 // Fix gap/ratio when resizing since Windows10 use ints for position/size of a window..
 // /!\ ShellHostExperience.exe is detected as a Window and it's annoying af.
-// /!\ Search if we can override the min size of a window. -> First result says it's not possible
 // Limit max depth -> 3 or 4 ?
 
 global std::vector<Monitor*> Monitors;
-
-global WCHAR* IgnoredWindows[] = {
-    L"Program Manager",
-    L"Microsoft Text Input Application",
-};
 
 internal Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
 {
@@ -50,37 +43,82 @@ internal Monitor* GetMonitorFromWindow(HWND window, DWORD flags)
     return nullptr;
 }
 
+internal HANDLE GetProcessHandleFromWindow(HWND window)
+{
+    if (window == nullptr)
+        return nullptr;
+    
+    DWORD pid = 0;
+    GetWindowThreadProcessId(window, &pid);
+    
+    if (pid == 0)
+        return nullptr;
+    
+    return OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+}
+
+internal PROCESS_EXTENDED_BASIC_INFORMATION GetProcessExtendedInformation(HANDLE process)
+{
+    pfnZwQueryInformationProcess ZwQueryInfoProcess = NULL;
+    
+    local_persist HMODULE dll = LoadLibraryA("ntdll");
+    
+    if (dll == nullptr)
+        throw std::runtime_error("Failed to load ntdll.");
+    
+    ZwQueryInfoProcess = (pfnZwQueryInformationProcess)GetProcAddress(dll, "ZwQueryInformationProcess");
+    
+    if (ZwQueryInfoProcess == nullptr)
+        throw std::runtime_error("Failed to load ZwQueryInformationProcess");
+    
+    PROCESS_EXTENDED_BASIC_INFORMATION pbei = {};
+    
+    NTSTATUS status = ZwQueryInfoProcess(process, ProcessBasicInformation, &pbei, sizeof(pbei), nullptr);
+    
+    if (NT_SUCCESS(status))
+        return pbei;
+    
+    throw std::runtime_error("Failed to query process information");
+}
+
+
 internal bool TryRegisterWindow(HWND window)
 {
     const auto length = GetWindowTextLengthW(window);
+    auto pHandle = GetProcessHandleFromWindow(window);
+    auto info = GetProcessExtendedInformation(pHandle);
     
-    if (!IsWindowVisible(window) || length == 0 || IsIconic(window))
+    if (length == 0 || IsIconic(window))
         return false;
     
-    // Double check
-    // NOTE(Mikyan): Some windows are not detected as valid but should be.
-    if (!Win32Helper::WindowIsValid(window))
+    if (!Win32Helper::WindowIsValid(window) || Win32Helper::WindowIsCloaked(window))
         return false;
+    
+    if (info.IsFrozen || info.IsBackground || info.IsCrossSessionCreate)
+        return false;
+    
+    auto title = static_cast<WCHAR*>(VirtualAlloc(0, sizeof(WCHAR) * (length + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE));
+    GetWindowTextW(window, title, length+1);
+    
+    if (wcscmp(title, L"Program Manager") == 0)
+        return false;
+    
+    RECT rect = {};
+    GetWindowRect(window, &rect);
     
     Window* w = static_cast<Window*>(VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE));
-    
     w->Handle = window;
-    w->Title = static_cast<WCHAR*>(VirtualAlloc(0, sizeof(WCHAR) * (length + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE));
-    GetWindowTextW(window, w->Title, length+1);
-    
-    for(const auto& iTitle : IgnoredWindows)
-    {
-        if (wcscmp(w->Title, iTitle) == 0)
-        {
-            VirtualFree(w->Title, 0, MEM_RELEASE);
-            VirtualFree(w, 0, MEM_RELEASE);
-            return false;
-        }
-    }
-    
-    // TODO(Mikyan): Get Border/Offset of the window
-    // DwmGetWindowAttribute() with DWMWA_EXTENDED_FRAME_BOUNDS
-    RECT frameBounds{};
+    w->IsMinimized = IsIconic(window);
+    w->IsMaximized = IsZoomed(window);
+    w->Title = std::wstring(title);
+    w->Area = Rect<f32>(rect);
+    w->FrameBounds = Win32Helper::WindowGetFrameBounds(window);
+    w->Offset = Rect<f32> {
+        static_cast<f32>(w->Area.X - w->FrameBounds.X),
+        static_cast<f32>(w->Area.Y - w->FrameBounds.Y),
+        static_cast<f32>(w->Area.Width - w->FrameBounds.Width),
+        static_cast<f32>(w->Area.Height - w->FrameBounds.Height)
+    };
     
     // NOTE(Mikyan): If we fail to get the corresponding Monitor, we take the nearest
     // from this window if we can, otherwise we return nullptr.
