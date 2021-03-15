@@ -6,12 +6,6 @@
 #include "Vector.h"
 #include "Screen.h"
 
-enum class SwapDirection
-{
-    CW, // Clockwise
-    CCW // Counter Clockwise
-};
-
 // NOTE(Mikyan): GetMonitorInfoA can return negative values
 // if we're getting information for a secondary monitor.
 struct Monitor
@@ -26,10 +20,10 @@ struct Monitor
     
     Screen* Display;
     
-    void HandleWindowSwap(SwapDirection direction);
     void HandleClockwiseRotation();
     void HandleCounterClockwiseRotation();
     void HandleWindowDestroy(HWND hwnd);
+    void HandleSplitDirection();
 };
 
 #endif //_MONITOR_H

@@ -40,7 +40,16 @@ void Monitor::HandleCounterClockwiseRotation()
     Display->WindowNode_Swap(node, nextNode);
 }
 
-void Monitor::HandleWindowSwap(SwapDirection direction)
+void Monitor::HandleWindowDestroy(HWND hwnd)
+{
+    if (hwnd == nullptr)
+        return;
+    
+    if (Display->RemoveWindow(hwnd))
+        Display->UpdateScreen();
+}
+
+void Monitor::HandleSplitDirection()
 {
     auto hwnd = GetForegroundWindow();
     
@@ -52,22 +61,15 @@ void Monitor::HandleWindowSwap(SwapDirection direction)
     if (node == nullptr)
         return;
     
-    if (direction == SwapDirection::CW)
-    {
-        Display->WindowNode_Swap(node, Display->WindowNode_GetLastLeaf(Display->Root));
-    }
-    else if (direction == SwapDirection::CCW)
-    {
-        Display->WindowNode_Swap(node, Display->WindowNode_GetFirstLeaf(Display->Root));
-    }
-    Display->UpdateScreen();
-}
-
-void Monitor::HandleWindowDestroy(HWND hwnd)
-{
-    if (hwnd == nullptr)
+    if (node->Split == SplitMode::NONE)
         return;
     
-    if (Display->RemoveWindow(hwnd))
-        Display->UpdateScreen();
+    if (node->Split == SplitMode::VERTICAL)
+    {
+        // TODO(Mikyan): Force horizontal split
+    }
+    else
+    {
+        // TODO(Mikyan): Force vertical split
+    }
 }

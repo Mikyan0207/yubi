@@ -10,8 +10,7 @@
 #include "Win32Helper.h"
 
 // NOTE(Mikyan): Somehow, I can't get the RECT for certain window like
-// Edge for example.
-// Edge is broken.
+// Chromium based browsers are broken?
 
 // TODO(Mikyan): Remove std::vector<Monitor*>, use custom allocator instead of new?
 // Force redraw when resizing windows. -> Currently done by focusing each window when resizing
@@ -21,10 +20,11 @@
 // Fix gap/ratio when resizing since Windows10 use ints for position/size of a window..
 // /!\ ShellHostExperience.exe is detected as a Window and it's annoying af.
 // /!\ Search if we can override the min size of a window. -> First result says it's not possible
+// Limit max depth -> 3 or 4 ?
 
-static std::vector<Monitor*> Monitors;
+global std::vector<Monitor*> Monitors;
 
-static const WCHAR* IgnoredWindows[] = {
+global WCHAR* IgnoredWindows[] = {
     L"Program Manager",
     L"Microsoft Text Input Application",
 };
@@ -58,13 +58,14 @@ internal bool TryRegisterWindow(HWND window)
         return false;
     
     // Double check
+    // NOTE(Mikyan): Some windows are not detected as valid but should be.
     if (!Win32Helper::WindowIsValid(window))
         return false;
     
-    Window* w = (Window*)VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    Window* w = static_cast<Window*>(VirtualAlloc(0, sizeof(Window), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE));
     
     w->Handle = window;
-    w->Title = (WCHAR*)VirtualAlloc(0, sizeof(WCHAR) * (length + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    w->Title = static_cast<WCHAR*>(VirtualAlloc(0, sizeof(WCHAR) * (length + 1), MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE));
     GetWindowTextW(window, w->Title, length+1);
     
     for(const auto& iTitle : IgnoredWindows)
@@ -100,7 +101,6 @@ extern "C" {
         {
             // TODO(Mikyan): Handle cloaking.
             // TODO(Mikyan): Handle Minimize/Maximize
-            // TODO(Mikyan): Handle 
             switch (event)
             {
                 case EVENT_OBJECT_SHOW:
@@ -136,27 +136,40 @@ extern "C" {
         
         if (modifier == MOD_ALT && key == KEY_K)
         {
-            printf("Swap windows.\n");
+            printf("Swap windows. CW\n");
             auto hwnd = GetForegroundWindow();
             
             auto* monitor = GetMonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
             
             if (monitor != nullptr)
             {
-                monitor->HandleWindowSwap(SwapDirection::CW);
+                monitor->HandleClockwiseRotation();
             }
         }
         
         if (modifier == MOD_ALT && key == KEY_L)
         {
-            printf("Swap windows.\n");
+            printf("Swap windows. CCW\n");
             auto hwnd = GetForegroundWindow();
             
             auto* monitor = GetMonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
             
             if (monitor != nullptr)
             {
-                monitor->HandleWindowSwap(SwapDirection::CCW);
+                monitor->HandleCounterClockwiseRotation();
+            }
+        }
+        
+        if (modifier == MOD_ALT && key == KEY_O)
+        {
+            printf("Change split direction");
+            
+            auto hwnd = GetForegroundWindow();
+            auto* monitor = GetMonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            
+            if (monitor == nullptr)
+            {
+                monitor->HandleSplitDirection();
             }
         }
     }

@@ -31,7 +31,7 @@ struct YUBI_API Window
 struct YUBI_API WindowNode
 {
     Rect<f32> Rect;
-    Window* Window; // Temp.
+    Window* Window;
     
     WindowNode* Parent;
     WindowNode* Left;
