@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "Rect.h"
 #include "Vector.h"
-#include "Screen.h"
+#include "Screen.hpp"
 
 // NOTE(Mikyan): GetMonitorInfoA can return negative values
 // if we're getting information for a secondary monitor.
