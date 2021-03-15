@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <algorithm>
 #include "Screen.h"
 
 Screen::Screen(i32 width, i32 height)
@@ -195,15 +196,12 @@ void Screen::WindowNode_Split(WindowNode* node)
         node->Right->Rect.Y += (node->Rect.Height * Ratio);
         node->Right->Rect.Height *= (1 - Ratio);
     }
-    
 }
 
 void Screen::WindowNode_Swap(WindowNode* a, WindowNode* b)
 {
     // NOTE(Mikyan): We only swap the window handles?
-    auto* tmp = a->Window;
-    a->Window = b->Window;
-    b->Window = tmp;
+    std::swap(a->Window, b->Window);
 }
 
 WindowNode* Screen::WindowNode_GetFirstLeaf(WindowNode* node)
@@ -242,7 +240,16 @@ WindowNode* Screen::WindowNode_GetNextLeaf(WindowNode* node)
 
 WindowNode* Screen::WindowNode_GetPrevLeaf(WindowNode* node)
 {
-    return nullptr;
+    if (node->Parent == nullptr)
+        return nullptr;
+    
+    if (WindowNode_IsLeftChild(node))
+        return WindowNode_GetPrevLeaf(node);
+    
+    if (WindowNode_IsLeaf(node->Parent->Left))
+        return node->Parent->Left;
+    
+    return WindowNode_GetFirstLeaf(node->Parent->Left->Right);
 }
 
 WindowNode* Screen::WindowNode_GetFromWindowHandle(HWND handle)

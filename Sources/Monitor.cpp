@@ -18,6 +18,7 @@ void Monitor::HandleClockwiseRotation()
         return;
     
     Display->WindowNode_Swap(node, prevNode);
+    Display->UpdateScreen();
 }
 
 void Monitor::HandleCounterClockwiseRotation()
@@ -38,6 +39,7 @@ void Monitor::HandleCounterClockwiseRotation()
         return;
     
     Display->WindowNode_Swap(node, nextNode);
+    Display->UpdateScreen();
 }
 
 void Monitor::HandleWindowDestroy(HWND hwnd)
