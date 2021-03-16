@@ -16,7 +16,6 @@
 // Handle negative values when moving windows.
 // Add Padding options to screen.
 // Fix gap/ratio when resizing since Windows10 use ints for position/size of a window..
-// /!\ ShellHostExperience.exe is detected as a Window and it's annoying af.
 // Limit max depth -> 3 or 4 ?
 
 global MonitorManager* Manager = nullptr;
