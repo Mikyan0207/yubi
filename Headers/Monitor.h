@@ -20,10 +20,6 @@ struct Monitor
     
     Screen* Display;
     
-    void HandleClockwiseRotation();
-    void HandleCounterClockwiseRotation();
-    void HandleWindowDestroy(HWND hwnd);
-    void HandleSplitDirection();
 };
 
 #endif //_MONITOR_H
