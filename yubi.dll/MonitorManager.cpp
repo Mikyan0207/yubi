@@ -46,6 +46,12 @@ bool MonitorManager::TryRegisterWindow(HWND hwnd)
         return false;
     }
     
+    if (wcscmp(title, L"Task Switching") == 0)
+    {
+        VirtualFree(title, 0, MEM_RELEASE);
+        return false;
+    }
+    
     RECT rect = {};
     GetWindowRect(hwnd, &rect);
     
@@ -95,7 +101,6 @@ void MonitorManager::HandleClockwiseRotation()
     
     if (prevNode == nullptr)
         return;
-    
     
     monitor->Display->Window_Swap(node, prevNode);
     monitor->Display->UpdateScreen();

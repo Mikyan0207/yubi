@@ -1,6 +1,6 @@
 @echo off
 
-set CLCompilerPath= "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
+set CLCompilerPath= "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
 
 set dll_opts=/DYUBI_EXPORTS /LD /INCREMENTAL:no
 set dll_code=..\yubi.dll\dll_main.cpp ..\yubi.dll\Screen.cpp ..\yubi.dll\Win32Helper.cpp ..\yubi.dll\MonitorManager.cpp
