@@ -2,19 +2,15 @@
 
 set CLCompilerPath= "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
 
-set dll_opts=/DYUBI_EXPORTS /LD /INCREMENTAL:no
-set dll_code=..\yubi.dll\dll_main.cpp ..\yubi.dll\Screen.cpp ..\yubi.dll\Win32Helper.cpp ..\yubi.dll\MonitorManager.cpp
-set dll_libs=user32.lib kernel32.lib dwmapi.lib
 
 set includes=/I"..\Headers"
-set opts=-FC -GR- -EHsc- -Od -Oi -WX -W4 -wd4100 -wd4251 -wd4201 -nologo -Zi /std:c++17 -Fm"yubi.map"
-set code=..\yubi.core\main.cpp
-set libs=user32.lib kernel32.lib yubi.lib
+set opts=/EHsc -Od -Oi -WX -W4 -wd4100 -wd4251 -wd4201 /std:c++17 /Feyubi
+set code=..\Source\main.cpp ..\Source\WinEvents.cpp
+set libs=user32.lib kernel32.lib
 
 IF NOT EXIST build mkdir build
 
 pushd build
 call %CLCompilerPath% x64
-cl %opts% %dll_opts% %includes% %dll_code% %dll_libs% -Feyubi /link /DLL
-cl %opts% %includes% %code% %libs% -Feyubic
+cl %opts% %includes% %code% %libs%
 popd
