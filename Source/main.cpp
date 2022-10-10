@@ -33,7 +33,8 @@ void CALLBACK WinHookProc(HWINEVENTHOOK winEventHook, DWORD event, HWND window, 
 
     if (event == EVENT_OBJECT_CREATE)
         std::cout<<"New window created"<<std::endl;
-    if (event == EVENT_OBJECT_UNCLOAKED)
+
+	if (event == EVENT_OBJECT_UNCLOAKED)
         std::cout<<"Window uncloacked"<<std::endl;
 }
 
