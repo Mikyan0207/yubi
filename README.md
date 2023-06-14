@@ -4,12 +4,14 @@
 </div>
 
 <div align="center">
-    <img src="https://img.shields.io/badge/license-GPL%20v3-blue.svg?style=for-the-badge&logo=none&labelColor=24292e&color=0366d6" />
-    <img src="https://img.shields.io/travis/Mikyan0207/yubi.svg?style=for-the-badge&logo=none&labelColor=24292e&color=green" />
-    <img src="https://img.shields.io/github/release/Mikyan0207/yubi.svg?style=for-the-badge&logo=none&labelColor=24292e&color=green" />
-    <img src="https://img.shields.io/github/downloads/Mikyan0207/yubi/total.svg?style=for-the-badge&logo=none&labelColor=24292e&color=blueviolet" />
-    <img src="https://img.shields.io/github/issues/Mikyan0207/yubi.svg?style=for-the-badge&logo=none&labelColor=24292e&color=red" />
+    <img src="https://img.shields.io/badge/license-GPL%20v3-blue.svg?style=for-the-badge&logo=none&labelColor=1f1f1f&color=0366d6" />
+    <img src="https://img.shields.io/travis/Mikyan0207/yubi.svg?style=for-the-badge&logo=none&labelColor=1f1f1f&color=green" />
+    <img src="https://img.shields.io/github/release/Mikyan0207/yubi.svg?style=for-the-badge&logo=none&labelColor=1f1f1f&color=green" />
+    <img src="https://img.shields.io/github/downloads/Mikyan0207/yubi/total.svg?style=for-the-badge&logo=none&labelColor=1f1f1f&color=blueviolet" />
+    <img src="https://img.shields.io/github/issues/Mikyan0207/yubi.svg?style=for-the-badge&logo=none&labelColor=1f1f1f&color=red" />
 </div>
+
+<br>
 
 Yubi is a window tiling manager designed for Windows 10 and above. It provides a convenient way to organize and manage windows on your desktop by allowing you to easily arrange them in various layouts such as horizontal, vertical, and Binary Space Partitioning (BSP). With Yubi, you can improve your productivity and workflow efficiency by efficiently utilizing your screen real estate.
 
@@ -36,7 +38,7 @@ To begin using Yubi, you'll need to install it on your system. Follow the steps 
 
 To manually install Yubi, please follow these steps:
 
-1. Download the latest release from the [Releases](https://github.com/username/repo/releases) page.
+1. Download the latest release from the [Releases](https://github.com/Mikyan0207/yubi/releases) page.
 2. Extract the downloaded package to your preferred directory.
 3. Run the `yubi.exe` file to start Yubi.
 
