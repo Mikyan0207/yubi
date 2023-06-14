@@ -13,7 +13,8 @@
 
 <br>
 
-Yubi is a window tiling manager designed for Windows 10 and above. It provides a convenient way to organize and manage windows on your desktop by allowing you to easily arrange them in various layouts such as horizontal, vertical, and Binary Space Partitioning (BSP). With Yubi, you can improve your productivity and workflow efficiency by efficiently utilizing your screen real estate.
+Yubi is a window tiling manager designed for Windows 10 and above.<br>gi
+It provides a convenient way to organize and manage windows on your desktop by allowing you to easily arrange them in various layouts such as horizontal, vertical, and Binary Space Partitioning (BSP).
 
 <br>
 
