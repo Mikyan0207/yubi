@@ -102,9 +102,11 @@ If you didn't install Yubi using Scoop, you can add the `yubi` command to your s
 5. Click on the "OK" button to save the changes.
 6. Open a new command prompt and run the `yubi` command to start Yubi.
 
+<br>
+
 ### Running Yubi in the background
 
-By default, Yubi will run in the foreground. If you want to run Yubi in the background, you can use the `--background` flag when starting Yubi:
+By default, Yubi will run in the foreground. If you want to run Yubi in the background, you can use the `-b` or `--background` flag when starting Yubi:
 
 ```shell
 yubi -b
@@ -120,7 +122,7 @@ Yubi will still be visible in the system tray, so you can easily access it by ri
 If you want to use Yubi in Powershell, you can add the following code to your Powershell Profile:
 
 ```powershell
-#Env:YUBI_CONFIG_PATH=<path-to-config-file> // Optional, default: $HOME\.config\Yubi\config.yml
+$Env:YUBI_CONFIG_PATH=<path-to-config-file> # Optional, default: $HOME\.config\Yubi\config.yml
 
 function RunYubi
 {
@@ -148,7 +150,7 @@ Set-Alias -Name 'yubi stop' -Value StopYubi -Option AllScope -Force
 
 Yubi supports configuration via a YAML file. The configuration file is located at `$HOME\.config\Yubi\config.yml` by default.
 You can modify the configuration file to change the default settings for Yubi.<br>
-You can also specify a custom configuration file using the `--config` flag when starting Yubi:
+You can also specify a custom configuration file using the `-c` or `--config` flag when starting Yubi:
 
 ```shell
 yubi -c <path-to-config-file>
@@ -156,7 +158,7 @@ yubi -c <path-to-config-file>
 
 Alternatively, you can set the `YUBI_CONFIG_PATH` environment variable to the path of your configuration file:
 
-```shell
+```powershell
 $Env:YUBI_CONFIG_PATH=<path-to-config-file>
 ```
 
