@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Yubi - Window Tiling Manager for Windows 10+</h1>
+  <h1>Yubi</h1>
   <!-- <img src="assets/yubi_logo.png" alt="Yubi Logo" width="200"> -->
 </div>
 
