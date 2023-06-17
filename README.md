@@ -47,9 +47,10 @@ The main goal of Yubi is to be a simple, lightweight, and easy-to-use window til
 ## Features
 
 - 🪟 Window Tiling: Effortlessly organize and resize windows for efficient multitasking.
+- :computer: Multi-monitor Support: Manage windows across multiple monitors.
 - :straight_ruler: Multiple Layouts: Choose from horizontal, vertical, and BSP (Binary Space Partitioning) layouts.
 - :keyboard: Hotkeys: Assign hotkeys to quickly perform window management actions.
-- :control_knobs: Fine-grained Control: Adjust window size and position with pixel-level precision.
+- :control_knobs: Configuration: Customize Yubi to suit your needs.
 
 <br>
 
